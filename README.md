@@ -24,7 +24,7 @@ Para la comunidad hacen falta herramientas nuevas que permitan ver y analizar es
 
 > Crear una **web pública** que muestre imágenes del cielo de SPHEREx de forma fácil de ver, y que permita **ver cómo cambian a lo largo del tiempo**.
 
-El usuario ingresa las **coordenadas** (ascensión recta y declinación) de una parte del cielo, y la herramienta entrega **una serie de imágenes de ese segmento, reproducida como video**, de modo que sea fácil notar el movimiento de los objetos.
+El usuario ingresa las **coordenadas** (ascensión recta y declinación) de una parte del cielo, y la herramienta entrega **una serie de imágenes de ese segmento, reproducida como video o series de tiempo**, de modo que sea fácil notar el movimiento de los objetos.
 
 ## 4. Objetivos
 
@@ -65,6 +65,7 @@ El usuario ingresa las **coordenadas** (ascensión recta y declinación) de una 
 
 - **Panel de tabla tipo TOPCAT:** tabla ordenable y filtrable de las observaciones que cubren el punto (fecha, detector, longitud de onda, versión).
 - **Agente de IA dentro de la web**, limitado a manejar la interfaz gráfica (ir a coordenadas, elegir banda, restar imágenes, etc.). Solo después de que lo esencial funcione.
+- **Cross match con otras misiones espaciales**, Podría ser buena idea y practica hacer crossmatch con distintas misiones espaciales para la extracción de características fotométricas.  
 
 ### 4.5 ¿Qué significa "coordenadas en la URL"?
 
