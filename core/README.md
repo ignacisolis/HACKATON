@@ -25,12 +25,14 @@ cuando hay que actualizar el catálogo.
 | `flags.py` | Decodifica la capa `FLAGS` y aplica las máscaras del documento | listo |
 | `test_flags.py` | 35 pruebas: bits, máscaras y cruce con el header FITS | pasan |
 | `types.py` | `Frame`, `AlignedCube`, `SpectrumPoint`: la frontera con `backend/` | listo |
-| `align.py` | Alineación por WCS (tarea 21) | firmas |
+| `align.py` | Alineación por WCS con movimiento propio (tarea 21) | **listo** |
+| `test_align.py` | 26 pruebas, incluido el criterio de aceptación | pasan |
 | `subtract.py` | Resta de imágenes comparables (tarea 22) | firmas, valida ya |
 | `spectrum.py` | Extracción y combinación de espectros (tarea 23) | firmas |
 
-El notebook de exploración `fase0_spherex_explorar_fits.ipynb` sigue en la raíz
-del repo.
+El notebook de exploración de la Fase 0 está en
+[`fase0_spherex_explorar_fits.ipynb`](fase0_spherex_explorar_fits.ipynb), en esta
+misma carpeta.
 
 > **Nota sobre `spherex_espectros.py`:** el README principal y la tarea 5 del
 > Tablero dan por hecho que ese módulo ya existe y fue probado con datos
@@ -118,6 +120,7 @@ python core/fetch_targets.py --dry-run    # solo muestra qué quedaría
 ```bash
 python core/test_targets.py     # 10 pruebas de astrometría
 python core/test_flags.py       # 35 pruebas de FLAGS
+python core/test_align.py       # 26 pruebas de alineación
 ```
 
 O con pytest, si está instalado: `pytest core/`.

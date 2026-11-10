@@ -51,6 +51,12 @@ jobs:
         # Incluye la que fija que SOURCE no se enmascara para fotometria.
         run: python core/test_flags.py
 
+      - name: Pruebas de alineacion
+        # Incluye el criterio de aceptacion de la tarea 21: WISE 0855 centrado
+        # en cada fecha, y la contraprueba de que sin corregir movimiento propio
+        # NO queda centrado.
+        run: python core/test_align.py
+
       - name: Los YAML de config parsean y tienen lo que deben
         run: |
           python - <<'PY'

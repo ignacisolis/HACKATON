@@ -344,13 +344,16 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 ## 11. Estado actual
 
 - [x] Consulta TAP a IRSA funcionando (WISE 0855: 256 observaciones, 27 fechas).
-- [x] Notebook `fase0_spherex_explorar_fits.ipynb`: exploración de las extensiones del FITS.
+- [x] Notebook `core/fase0_spherex_explorar_fits.ipynb`: exploración de las extensiones del FITS.
 - [x] Repo en GitHub con una rama por persona: `ciencias`, `front` y `back`.
 - [x] **Astrometría de los 4 objetivos** (`config/targets.yaml`) con RA, Dec, época, movimiento propio, paralaje y bibcode de cada medición.
 - [x] **`core/targets.py`**: funciones puras que propagan una posición a la fecha de cada observación. 10 pruebas en `core/test_targets.py`, todas pasan.
 - [x] **Bits de `FLAGS`** (`config/flags.yaml`) y `core/flags.py` para decodificarlos y aplicar las máscaras que recomienda el documento. 26 pruebas en `core/test_flags.py`, todas pasan.
 - [x] **Cobertura de los 4 objetivos** (`config/coverage.yaml`): observaciones, fechas, detectores y longitud de onda por detector.
-- [ ] `core/align.py`, `core/subtract.py` y `core/spectrum.py` (tareas 21, 22 y 23).
+- [x] **`core/align.py`**: alineación por WCS con corrección de movimiento propio (tarea 21). 26 pruebas, incluido el criterio de aceptación y la contraprueba de que sin corregir no centra.
+- [x] Notebook de Fase 0 movido a `core/` (tarea 5).
+- [ ] `core/subtract.py` y `core/spectrum.py` (tareas 22 y 23). Las firmas están; `is_comparable()` ya valida.
+- [x] CI en GitHub Actions: 71 pruebas en cada push y PR.
 - [ ] Todo lo demás del roadmap (Fases 1 a 6).
 
 > **Corrección:** las versiones anteriores de este README daban por hecho un
@@ -386,7 +389,7 @@ ra, dec = t.target_position("wise_0855", 61174.0)   # MJD del header FITS
 
 ### Notebook de exploración
 
-Abre `fase0_spherex_explorar_fits.ipynb` y ejecuta las celdas **en orden**: el
+Abre `core/fase0_spherex_explorar_fits.ipynb` y ejecuta las celdas **en orden**: el
 objetivo, la consulta TAP y el cutout deben correrse antes de las celdas que
 usan `coord`, `obs` y `hdul`.
 

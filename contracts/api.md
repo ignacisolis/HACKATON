@@ -199,9 +199,17 @@ Camilo puede escribir contra esto hoy.
 | `core.flags.pipeline_counts(header)` | ✅ funciona | `full_frame_counts` |
 | `core.flags.cross_check_fits(header)` | ✅ funciona | avisa si un release movió bits |
 | `core.is_comparable(a, b)` | ✅ funciona | `(bool, motivo)` |
-| `core.align(frames, target_key=...)` | firma | `AlignedCube` |
-| `core.subtract(a, b)` | firma, **valida ya** | `(diff, var, usable)` |
-| `core.spectrum(frames, target_key=...)` | firma | lista de `SpectrumPoint` |
+| `core.align_frames(frames, target_key=...)` | ✅ **funciona** | `AlignedCube` |
+| `core.target_pixel(frame, target_key=...)` | ✅ funciona | `(x, y)` dónde cae el objetivo |
+| `core.shift_series(frames, target_key=...)` | ✅ funciona | corrimientos sin remuestrear |
+| `core.subtract_frames(a, b)` | firma, **valida ya** | `(diff, var, usable)` |
+| `core.extract_spectrum(frames, target_key=...)` | firma | lista de `SpectrumPoint` |
+
+> **Ojo con los nombres.** El Tablero los llama `core.align()`, `core.subtract()`
+> y `core.spectrum()`, pero esos son los nombres de los **módulos**. Exponer
+> funciones con el mismo nombre hacía que `from core import align` devolviera la
+> función en vez del módulo, un error que no avisa. Los nombres de verdad son
+> los de la tabla de arriba.
 
 Los tipos de intercambio (`Frame`, `AlignedCube`, `SpectrumPoint`) están en
 [`core/types.py`](../core/types.py) con cada campo comentado. **`Frame` no

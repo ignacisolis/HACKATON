@@ -3,7 +3,8 @@
 Lo que el resto del equipo necesita saber del lado científico, y de dónde sale
 cada número. Mantiene esta página el rol C (Nacho).
 
-Estado: **tareas 6, 7 y 8 cerradas.** Toda la Fase 0 del rol C está lista.
+Estado: **tareas 5, 6, 7, 8 y 21 cerradas.** Toda la Fase 0 del rol C está
+lista, más la alineación de la Fase 2.
 
 ---
 
@@ -401,7 +402,66 @@ aviso conservador y que no implica descartar la medición.
 
 ---
 
-## 5. Cómo reproducir todo esto
+## 5. Alineación (tarea 21)
+
+`core.align_frames()` recentra una serie de recortes sobre el objetivo, de modo
+que quede en el mismo píxel en todos los cuadros. Es la condición para hacer un
+video, restar imágenes o sumar apertura.
+
+Resuelve **dos cosas distintas** a la vez, y conviene no confundirlas: que el
+objetivo se mueve en el cielo (movimiento propio, lo da `targets.py`) y que cada
+exposición apunta distinto (lo da el WCS de cada recorte).
+
+### 5.1 Tres decisiones, y por qué
+
+**Los `FLAGS` se remuestrean por vecino más cercano, nunca bilineal.** Interpolar
+un bitmap mezcla bits de píxeles vecinos e inventa combinaciones que nunca
+existieron: el promedio de `SOURCE` (2²¹) y nada no es "medio SOURCE", es basura.
+
+**La varianza se propaga con los pesos al cuadrado.** Si un píxel de salida es
+Σ wᵢ·vᵢ, su varianza es Σ wᵢ²·varᵢ. Por eso el remuestreo está escrito a mano en
+vez de usar `scipy.ndimage`: así la varianza usa exactamente los mismos pesos
+que la imagen.
+
+> Ojo con leer la varianza de más: al interpolar **baja** (cuatro pesos de 0.25
+> dan un cuarto de la varianza original), pero eso **no** es mejor señal/ruido.
+> El ruido queda correlacionado entre píxeles vecinos. La ganancia real viene de
+> combinar visitas repetidas, que es `coadd()` en la tarea 22.
+
+**Los píxeles sin dato se marcan con `MISSING_DATA`**, además de quedar `NaN` en
+la imagen. Es la opción más segura: ese bit está en las **dos** listas de
+enmascarado del documento, así que `core.flags.mask_for()` los excluye sin que
+nadie tenga que acordarse de hacerlo. **Esto le importa al backend:** los NaN del
+cubo no son un error, son borde de remuestreo, y ya vienen marcados.
+
+### 5.2 Qué se probó
+
+El criterio de aceptación del Tablero ("WISE 0855 queda centrado en cada fecha")
+es una prueba literal: construye cuadros en la posición **real** del objeto en 5
+fechas distintas, con apuntados distintos, y verifica que tras alinear el
+centroide queda a menos de 0.1 px del centro en todos.
+
+Y hay una contraprueba que es la que le da sentido: alinear contra las
+coordenadas J2000 **sin** propagar deja la fuente fuera del recorte. Sin eso,
+centrar podría estar funcionando por casualidad.
+
+También se verificó contra el **recorte real** de R Dra, con su WCS `TAN-SIP` y
+distorsión incluida: el objetivo se ubica en (14.14, 14.35) de 29×29 y el
+corrimiento aplicado es exacto.
+
+### 5.3 Una limitación medida, no supuesta
+
+`centroid()` es un centroide ponderado por flujo, sin restar fondo ni rechazar
+vecinos. Sobre una fuente aislada da mejor que 0.1 px; sobre el recorte real de
+R Dra **se desvía 0.7 px**, porque es un campo poblado con fondo alto y el
+estimador se sesga con las fuentes de al lado.
+
+No es un fallo de la alineación: el corrimiento aplicado fue exacto. Pero
+significa que para medir el movimiento propio de WISE 0855 en serio —que son
+1.35 px en toda la ventana— hace falta restar fondo y ajustar una PSF. Eso es
+parte de la tarea 23, y conviene no prometer precisión sub-píxel antes.
+
+## 6. Cómo reproducir todo esto
 
 ```bash
 pip install -r requirements.txt
@@ -410,5 +470,6 @@ python core/targets.py            # tabla resumen de los objetivos
 python core/flags.py              # tabla de bits de FLAGS y las dos máscaras
 python core/fetch_coverage.py     # regenera config/coverage.yaml desde IRSA
 python core/test_targets.py       # 10 pruebas, incluida la de la época
-python core/test_flags.py         # 26 pruebas de bits y máscaras
+python core/test_flags.py         # 35 pruebas de bits y máscaras
+python core/test_align.py         # 26 pruebas de alineación
 ```
