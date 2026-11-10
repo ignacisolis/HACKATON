@@ -231,6 +231,96 @@ def source_doc(path=None):
     return load_config(path)["source"]
 
 
+# --------------------------------------------------------------------------
+# Segunda fuente: el header del propio FITS
+# --------------------------------------------------------------------------
+# El header de la extension FLAGS trae tarjetas MP_<NOMBRE> = <bit>. No
+# reemplaza al documento: trae 16 bits contra los 23 de la Tabla 16, y le faltan
+# las dos listas de enmascarado. Pero documenta 2 bits que el documento omite
+# (PHANTOM y REFERENCE) y, sobre todo, viaja CON los datos: si un release futuro
+# agrega bits, el header lo dice y el PDF puede tardar.
+
+MP_PREFIX = "MP_"
+
+
+def from_fits_header(header):
+    """Lee las definiciones de bits del header de la extension FLAGS.
+
+    `header` es cualquier mapeo de tarjeta -> valor: un astropy Header o un dict.
+    Devuelve {nombre: bit} con las tarjetas MP_<NOMBRE>. Puro.
+
+        >>> from_fits_header({"MP_SOURCE": 21, "MP_HOT": 10})
+        {'SOURCE': 21, 'HOT': 10}
+    """
+    out = {}
+    for key in header:
+        if not str(key).startswith(MP_PREFIX):
+            continue
+        try:
+            out[str(key)[len(MP_PREFIX):]] = int(header[key])
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
+def cross_check_fits(header, path=None):
+    """Compara el header real contra config/flags.yaml y reporta diferencias.
+
+    Es la forma de enterarse de que un release nuevo cambio los flags, en vez de
+    seguir confiando en un PDF viejo. Devuelve un dict con:
+
+      agree            bits que coinciden en nombre y numero
+      mismatched       mismo nombre, numero distinto  <- esto es una alarma
+      only_in_fits     en el header pero no en el YAML <- bits nuevos
+      only_in_config   en el YAML pero no en el header (lo normal: 9 bits)
+      ok               True si no hay mismatched ni only_in_fits
+    """
+    fits_bits = from_fits_header(header)
+    cfg_bits = _name_to_bit(path)
+
+    agree, mismatched = {}, {}
+    for name, bit in fits_bits.items():
+        if name not in cfg_bits:
+            continue
+        if cfg_bits[name] == bit:
+            agree[name] = bit
+        else:
+            mismatched[name] = {"fits": bit, "config": cfg_bits[name]}
+
+    only_in_fits = {n: b for n, b in fits_bits.items() if n not in cfg_bits}
+    only_in_config = {n: b for n, b in cfg_bits.items() if n not in fits_bits}
+
+    return {
+        "agree": agree,
+        "mismatched": mismatched,
+        "only_in_fits": only_in_fits,
+        "only_in_config": only_in_config,
+        "ok": not mismatched and not only_in_fits,
+    }
+
+
+def pipeline_counts(header):
+    """Cuentas de pixeles marcados que el pipeline deja en el header.
+
+    Lee las tarjetas 'L2 N_<NOMBRE>'. Puro.
+
+    CUIDADO: son cuentas de la IMAGEN COMPLETA de 2040x2040, no del recorte. En
+    un cutout de 29x29 se vio 'L2 N_OUTLIER = 98707', mas que los 841 pixeles
+    que tiene el recorte. Para el recorte hay que usar bit_counts() sobre el
+    array. Esto sirve para saber como venia la exposicion entera.
+    """
+    out = {}
+    for key in header:
+        k = str(key)
+        if not k.startswith("L2 N_"):
+            continue
+        try:
+            out[k[len("L2 N_"):]] = int(header[key])
+        except (TypeError, ValueError):
+            continue
+    return out
+
+
 if __name__ == "__main__":
     cfg = load_config()
     src = cfg["source"]

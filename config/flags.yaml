@@ -28,6 +28,30 @@ source:
   mask_usage_pages: [42, 43]
   retrieved: '2026-11-10'
 
+# Segunda fuente: el header de la extension FLAGS de cada FITS trae tarjetas
+# MP_<NOMBRE> = <bit>. Verificado en un cutout real (release l2b-v20-2025-251).
+# Las dos fuentes NO dicen lo mismo, y conviene saber en que difieren:
+#
+#   - El FITS trae 16 bits; el documento, 23.
+#   - El FITS DOCUMENTA 2 bits que el documento omite: 4 (PHANTOM) y 5
+#     (REFERENCE). Estan incluidos abajo con origin: fits_header.
+#   - El documento DOCUMENTA 9 bits que el FITS no menciona: 20 (CROSSTALK) y
+#     22 a 29 (los GHOST, STREAK, BLOOM, SNOWBALL, HALO, SATELLITE_HALO).
+#   - Los 14 bits que aparecen en las dos fuentes coinciden en numero y
+#     significado. Eso valida la transcripcion.
+#   - Solo el documento trae las dos listas de enmascarado (mask_sets), que es
+#     la parte que decide si la fotometria sirve.
+#
+# O sea: ninguna de las dos fuentes alcanza sola. core.flags.cross_check_fits()
+# compara un header real contra este archivo y avisa de las diferencias, que es
+# la forma de enterarse si un release futuro agrega bits.
+fits_header_source:
+  extension: FLAGS
+  keyword_pattern: MP_<NOMBRE> = <numero de bit>
+  verified_release: l2b-v20-2025-251
+  verified_on: '2026-11-10'
+  keywords_found: 16
+
 extension: FLAGS
 description: Bitmap de estado y procesamiento por pixel, 2040x2040 en la imagen completa.
 
@@ -62,6 +86,28 @@ bits:
       u OVERFLOW senala condiciones tempranas: transitorio temprano (primera mitad
       de la exposicion) o desborde temprano (primeros ~5 segundos).
     stage: onboard (Level 0)
+  4:
+    name: PHANTOM
+    label: Phantom pixel
+    descripcion: >-
+      Pixel fantasma. Son pixeles interpolados que el instrumento intercala para
+      corregir derivas de la cadena de amplificacion.
+    origin: fits_header
+    note: >-
+      NO esta en la Tabla 16 del Explanatory Supplement. Sale del header FITS
+      (MP_PHANTOM = 4), donde el comentario dice solo "Phantom pixel". La
+      descripcion de para que sirven es inferencia del contexto del documento
+      sobre correcciones de amplificador; confirmar antes de citarla.
+  5:
+    name: REFERENCE
+    label: Reference pixel
+    descripcion: >-
+      Pixel de referencia, usado para medir y corregir las derivas de la cadena
+      de amplificacion.
+    origin: fits_header
+    note: >-
+      NO esta en la Tabla 16 del Explanatory Supplement. Sale del header FITS
+      (MP_REFERENCE = 5), con el comentario "Reference pixel".
   6:
     name: NONFUNC
     label: Non-functional pixel
@@ -204,10 +250,17 @@ bits:
       Pixel afectado por el halo de una traza de satelite. El documento no lo
       recomienda para analisis cientifico.
 
-# Bits que NO aparecen en la Tabla 16 del documento. Sin significado conocido:
-# no asumir que estan libres ni inventarles uno. Si alguno aparece activo en
-# datos reales, es una senal de que el documento quedo viejo.
-unassigned_bits: [3, 4, 5, 8, 13, 16, 18, 30, 31]
+# Bits sin significado conocido en NINGUNA de las dos fuentes: ni en la Tabla 16
+# ni en el header FITS. No asumir que estan libres ni inventarles uno. Si alguno
+# aparece activo en datos reales, las dos fuentes quedaron viejas.
+# Los bits 4 y 5 salieron de esta lista cuando el header FITS los documento.
+unassigned_bits: [3, 8, 13, 16, 18, 30, 31]
+
+# Bits que solo conoce una de las dos fuentes. Util para saber que esperar al
+# correr core.flags.cross_check_fits() contra un header real.
+only_in_fits_header: [PHANTOM, REFERENCE]
+only_in_document: [CROSSTALK, GHOST, GHOST_FPA, GHOST_EXT, STREAK, BLOOM,
+                   SNOWBALL, HALO, SATELLITE_HALO]
 
 # Listas de enmascarado que recomienda el propio documento (paginas 42-43).
 # Son DISTINTAS entre si, y la diferencia es la parte importante.
@@ -240,6 +293,24 @@ combinations:
     significa: >-
       nucleo de un rayo cosmico grande o de un snowball; la varianza se estima con
       la prescripcion de overflow
+
+# Otras tarjetas utiles del header de la extension FLAGS.
+fits_header_extras:
+  EXTTYPE:
+    valor: MASK
+    para_que: >-
+      El propio header declara que la extension se puede usar como capa de
+      mascara superpuesta. Sirve para la consideracion C6.
+  L2 N_<NOMBRE>:
+    para_que: >-
+      El pipeline ya trae contados los pixeles marcados de varios flags, por
+      ejemplo "L2 N_SOURCE" o "L2 N_OUTLIER". Ahorra recorrer el array.
+    CUIDADO: >-
+      Son cuentas de la IMAGEN COMPLETA de 2040x2040, no del recorte. En un
+      cutout de 29x29 se vio "L2 N_OUTLIER = 98707", que es mas que los 841
+      pixeles del recorte. Si el frontend muestra esos numeros como si fueran
+      del recorte, miente por varios ordenes de magnitud. Para el recorte hay
+      que contar sobre el array, con core.flags.bit_counts().
 
 # Ojo: esto NO es parte de la extension FLAGS por pixel.
 otros_bitmasks:

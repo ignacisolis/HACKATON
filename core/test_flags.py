@@ -27,12 +27,28 @@ def test_config_loads():
     assert cfg["source"]["doc_id"] == "SSDC-DP-017"
 
 
-def test_known_bits_match_the_document():
-    """Los 23 bits de la Tabla 16, sin agregados ni faltantes."""
+def test_known_bits_match_both_sources():
+    """Los 23 bits de la Tabla 16 mas los 2 que solo trae el header FITS."""
     assert f.known_bits() == [
-        0, 1, 2, 6, 7, 9, 10, 11, 12, 14, 15, 17, 19, 20, 21, 22, 23, 24, 25,
-        26, 27, 28, 29,
+        0, 1, 2, 4, 5, 6, 7, 9, 10, 11, 12, 14, 15, 17, 19, 20, 21, 22, 23, 24,
+        25, 26, 27, 28, 29,
     ]
+
+
+def test_bits_only_in_fits_header_are_marked():
+    """PHANTOM y REFERENCE no estan en el documento: hay que poder distinguirlos."""
+    for name in f.load_config()["only_in_fits_header"]:
+        spec = f.describe(name)
+        assert spec.get("origin") == "fits_header", name
+        assert "NO esta en la Tabla 16" in spec["note"], name
+
+
+def test_document_only_bits_are_not_in_the_fits_header():
+    """Los 9 bits que el header FITS no menciona siguen viniendo del documento."""
+    only_doc = f.load_config()["only_in_document"]
+    assert "CROSSTALK" in only_doc and "SATELLITE_HALO" in only_doc
+    for name in only_doc:
+        assert f.describe(name).get("origin") != "fits_header", name
 
 
 def test_documented_and_unassigned_cover_32_bits_without_overlap():
@@ -222,6 +238,98 @@ def test_source_doc_is_citable():
     src = f.source_doc()
     for field in ("document", "doc_id", "version", "date", "url", "table"):
         assert str(src.get(field, "")).strip(), field
+
+
+# --------------------------------------------------------------------------
+# Segunda fuente: el header del FITS
+# --------------------------------------------------------------------------
+
+# Tarjetas copiadas de un cutout real de SPHEREx (release l2b-v20-2025-251,
+# detector D2, exposicion 2025-06-08). Fijarlas aca hace la prueba
+# determinista y sin red; cross_check_fits() contra datos frescos se corre a
+# mano cuando sale un release nuevo.
+REAL_FLAGS_HEADER = {
+    "EXTTYPE": "MASK",
+    "L2 N_OUTLIER": 98707,
+    "L2 N_TRANSIENT": 19834,
+    "L2 N_OVERFLOW": 504,
+    "L2 N_SUR_ERROR": 12158,
+    "L2 N_NONFUNC": 1789,
+    "L2 N_FULLSAMPLE": 240,
+    "MP_TRANSIENT": 0,
+    "MP_OVERFLOW": 1,
+    "MP_SUR_ERROR": 2,
+    "MP_PHANTOM": 4,
+    "MP_REFERENCE": 5,
+    "MP_NONFUNC": 6,
+    "MP_DICHROIC": 7,
+    "MP_MISSING_DATA": 9,
+    "MP_HOT": 10,
+    "MP_COLD": 11,
+    "MP_FULLSAMPLE": 12,
+    "MP_PHANMISS": 14,
+    "MP_NONLINEAR": 15,
+    "MP_PERSIST": 17,
+    "MP_OUTLIER": 19,
+    "MP_SOURCE": 21,
+    "EXTNAME": "FLAGS",
+    "NAXIS1": 29,
+}
+
+
+def test_from_fits_header_reads_mp_keywords():
+    bits = f.from_fits_header(REAL_FLAGS_HEADER)
+    assert bits["SOURCE"] == 21
+    assert bits["TRANSIENT"] == 0
+    assert len(bits) == 16, "el header real trae 16 tarjetas MP_"
+    assert "EXTNAME" not in bits and "NAXIS1" not in bits
+
+
+def test_from_fits_header_ignores_junk():
+    assert f.from_fits_header({"MP_RARO": "no es un numero"}) == {}
+    assert f.from_fits_header({}) == {}
+
+
+def test_cross_check_against_real_header_agrees():
+    """Las dos fuentes coinciden en los bits que comparten."""
+    r = f.cross_check_fits(REAL_FLAGS_HEADER)
+    assert r["mismatched"] == {}, "un bit significa cosas distintas en cada fuente"
+    assert r["only_in_fits"] == {}, "el header trae bits que el YAML no conoce"
+    assert r["ok"]
+    assert len(r["agree"]) == 16
+
+
+def test_cross_check_lists_the_nine_document_only_bits():
+    r = f.cross_check_fits(REAL_FLAGS_HEADER)
+    assert set(r["only_in_config"]) == set(f.load_config()["only_in_document"])
+    assert len(r["only_in_config"]) == 9
+
+
+def test_cross_check_detects_a_renumbered_bit():
+    """Si un release mueve un bit, la comprobacion tiene que gritar."""
+    header = dict(REAL_FLAGS_HEADER, MP_SOURCE=30)
+    r = f.cross_check_fits(header)
+    assert not r["ok"]
+    assert r["mismatched"]["SOURCE"] == {"fits": 30, "config": 21}
+
+
+def test_cross_check_detects_a_new_bit():
+    header = dict(REAL_FLAGS_HEADER, MP_FLAMANTE=31)
+    r = f.cross_check_fits(header)
+    assert not r["ok"]
+    assert r["only_in_fits"] == {"FLAMANTE": 31}
+
+
+def test_pipeline_counts_are_full_frame_not_cutout():
+    """La trampa: las cuentas del header son de la imagen entera."""
+    counts = f.pipeline_counts(REAL_FLAGS_HEADER)
+    assert counts["OUTLIER"] == 98707
+    assert "EXTNAME" not in counts
+    cutout_pixels = REAL_FLAGS_HEADER["NAXIS1"] ** 2
+    assert counts["OUTLIER"] > cutout_pixels, (
+        "si esto fallara, las cuentas serian del recorte y podriamos usarlas tal cual"
+    )
+    assert "CUIDADO" in f.load_config()["fits_header_extras"]["L2 N_<NOMBRE>"]
 
 
 def main():
