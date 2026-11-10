@@ -1,0 +1,260 @@
+# config/flags.yaml
+#
+# Significado de cada bit de la extension FLAGS de las imagenes espectrales
+# de SPHEREx (Level 2). Tarea 8 del Tablero, rol C.
+#
+# TRANSCRITO A MANO del Explanatory Supplement. No se adivino ningun bit: los
+# que no aparecen en la tabla del documento estan listados aparte, en
+# `unassigned_bits`, y deben tratarse como sin significado conocido.
+#
+# EL HALLAZGO QUE IMPORTA
+# La Fase 0 vio que el bit 21 aparece en ~41 % de los pixeles y quedo como
+# incognita. El bit 21 es SOURCE: "pixel mapeado a una fuente conocida". No es
+# un defecto, es la mascara de fuentes. Y por eso NO se enmascara al hacer
+# fotometria: si se enmascara, se borra el objetivo que se queria medir.
+# Ver `mask_sets` al final: el documento da DOS listas distintas, una para
+# estimar el fondo y otra para fotometria, y SOURCE solo esta en la primera.
+
+schema_version: 1
+
+source:
+  document: SPHEREx Explanatory Supplement
+  doc_id: SSDC-DP-017
+  version: '2.0'
+  date: '2026-08-25'
+  url: https://irsa.ipac.caltech.edu/data/SPHEREx/docs/SPHEREx_Expsupp_QR.pdf
+  table: 'Table 16: Image pixel flags used in spectral images at Level 2'
+  table_pages: [31, 32, 33]
+  mask_usage_pages: [42, 43]
+  retrieved: '2026-11-10'
+
+extension: FLAGS
+description: Bitmap de estado y procesamiento por pixel, 2040x2040 en la imagen completa.
+
+# bit -> significado. `stage` dice en que etapa se asigna, cuando el documento
+# lo aclara en su columna Note.
+bits:
+  0:
+    name: TRANSIENT
+    label: Transient (cosmic ray)
+    descripcion: >-
+      Transitorio detectado durante el SUR, tipicamente un impacto de rayo cosmico.
+      Tambien marca pixeles afectados por derrame de carga (bloom) desde una fuente
+      vecina muy brillante: cuando una estrella saturada derrama carga a los pixeles
+      de al lado, el inicio del derrame puede disparar este flag.
+    note: >-
+      Los transitorios que ocurren en los primeros diez segundos de la observacion
+      pueden no quedar marcados.
+    stage: onboard (Level 0)
+  1:
+    name: OVERFLOW
+    label: Overflow (half-well reached)
+    descripcion: >-
+      Se alcanzo el umbral de desborde durante el SUR. El umbral esta en
+      aproximadamente la mitad del nivel de saturacion de pozo completo.
+    stage: onboard (Level 0)
+  2:
+    name: SUR_ERROR
+    label: SUR data handling error
+    descripcion: >-
+      Bit chksum_error del procesamiento de datos del instrumento. Solo, indica un
+      error de manejo de datos en el algoritmo SUR a bordo. Combinado con TRANSIENT
+      u OVERFLOW senala condiciones tempranas: transitorio temprano (primera mitad
+      de la exposicion) o desborde temprano (primeros ~5 segundos).
+    stage: onboard (Level 0)
+  6:
+    name: NONFUNC
+    label: Non-functional pixel
+    descripcion: >-
+      Pixel permanentemente inutilizable o muerto. Evaluacion inicial de pre-vuelo,
+      que puede actualizarse durante la mision. Inservible para cualquier proposito.
+    stage: static
+  7:
+    name: DICHROIC
+    label: Dichroic dark corner
+    descripcion: >-
+      Pixeles en las "esquinas oscuras" de las bandas 3 y 4, donde el efecto "smile"
+      deja el pixel con un bandpass incompatible con el lado del dicroico en el que
+      esta. Marca pixeles de baja transmision esperada, no calibrables de forma util
+      ni valiosos para fotometria.
+  9:
+    name: MISSING_DATA
+    label: Missing data
+    descripcion: >-
+      Pixeles cuyo dato de a bordo se perdio antes de llegar al SSDC, por ejemplo
+      paquetes corruptos en la bajada que no se retransmitieron. No hay dato para
+      ese pixel en esa imagen.
+    stage: Level 1
+  10:
+    name: HOT
+    label: Hot pixel
+    descripcion: >-
+      Pixel caliente: ruidoso o afectado por senal espuria. Se determina por
+      exposicion; los permanentemente calientes van como NONFUNC. No usable para
+      ciencia.
+    stage: Level 2
+  11:
+    name: COLD
+    label: Cold pixel
+    descripcion: >-
+      Pixel que aparece insensible a la luz, o con senal anomalamente baja en una
+      exposicion concreta; los permanentemente muertos van como NONFUNC. No usable
+      para ciencia.
+    stage: Level 2
+  12:
+    name: FULLSAMPLE
+    label: Full sample history available
+    descripcion: >-
+      Pixel para el que esta disponible el historial completo de muestreo, por la
+      region rotatoria de 8x32 pixeles de lectura completa. El documento lo describe
+      como puramente informativo.
+    note: >-
+      CUIDADO: la frase del documento es "Not usable for science, purely
+      informational". No esta en ninguna de las dos listas de enmascarado, asi que
+      se interpreta como que el FLAG es informativo, no que el pixel sea malo.
+      Enmascarar estos pixeles tiraria dato bueno. Confirmar si aparece la duda.
+  14:
+    name: PHANMISS
+    label: Missing phantom pixels
+    descripcion: >-
+      Se aplica a pixeles que no pueden corregirse por faltar pixeles fantasma.
+  15:
+    name: NONLINEAR
+    label: Unreliable nonlinearity correction
+    descripcion: >-
+      Pixel para el que no se pudo determinar una correccion de no linealidad
+      confiable. Por su mala precision fotometrica, deberia excluirse de la mayoria
+      de los analisis cientificos.
+    stage: Level 2
+  17:
+    name: PERSIST
+    label: Persistence
+    descripcion: >-
+      Pixel afectado por carga persistente por encima del umbral de Level 2.
+  19:
+    name: OUTLIER
+    label: Outlier pixel
+    descripcion: >-
+      Pixel marcado por el modulo "Detect Outlier Pixels".
+  20:
+    name: CROSSTALK
+    label: Crosstalk
+    descripcion: >-
+      Pixel afectado por crosstalk "ordinario".
+  21:
+    name: SOURCE
+    label: Known source
+    descripcion: >-
+      Pixel mapeado a una fuente conocida. Es la mascara de fuentes, no un defecto.
+    note: >-
+      Este es el bit que domina en los recortes: ~41 % de los pixeles en la muestra
+      de Fase 0. NO enmascararlo para fotometria, porque borra el objetivo. Es el
+      candidato natural para la capa de "mascaras de contaminacion" que pide la
+      consideracion C6 del enunciado.
+  22:
+    name: GHOST
+    label: Optical ghost (in frame)
+    descripcion: >-
+      Pixel afectado por un fantasma optico de una fuente brillante dentro del
+      cuadro de la exposicion.
+  23:
+    name: GHOST_FPA
+    label: Optical ghost (other detector)
+    descripcion: >-
+      Pixel afectado por un fantasma optico de una fuente brillante vista en otro
+      detector del FPA.
+    note: >-
+      Actualmente sin uso, absorbido en GHOST_EXT. El documento dice que se va a
+      eliminar en el procesamiento del ano 2.
+    deprecated: true
+  24:
+    name: GHOST_EXT
+    label: Optical ghost (out of field)
+    descripcion: >-
+      Pixel afectado por un fantasma optico de una fuente brillante fuera del campo
+      de vision.
+    note: En desarrollo segun el documento.
+  25:
+    name: STREAK
+    label: Satellite streak
+    descripcion: >-
+      Pixel afectado por una traza detectada en la imagen, presumiblemente de un
+      objeto en orbita terrestre.
+  26:
+    name: BLOOM
+    label: Source blooming
+    descripcion: >-
+      Pixel afectado por derrame de carga de una fuente brillante.
+  27:
+    name: SNOWBALL
+    label: Snowball event
+    descripcion: >-
+      Pixel afectado por eventos "snowball", en los que se libera una cantidad muy
+      grande de electrones.
+  28:
+    name: HALO
+    label: Transient halo
+    descripcion: >-
+      Pixel afectado por el halo de un transitorio. El documento recomienda cautela
+      al usarlo en analisis cientifico.
+  29:
+    name: SATELLITE_HALO
+    label: Satellite streak halo
+    descripcion: >-
+      Pixel afectado por el halo de una traza de satelite. El documento no lo
+      recomienda para analisis cientifico.
+
+# Bits que NO aparecen en la Tabla 16 del documento. Sin significado conocido:
+# no asumir que estan libres ni inventarles uno. Si alguno aparece activo en
+# datos reales, es una senal de que el documento quedo viejo.
+unassigned_bits: [3, 4, 5, 8, 13, 16, 18, 30, 31]
+
+# Listas de enmascarado que recomienda el propio documento (paginas 42-43).
+# Son DISTINTAS entre si, y la diferencia es la parte importante.
+mask_sets:
+  background:
+    titulo: Flags for background estimation masking
+    para_que: >-
+      Estimar el fondo alrededor de una fuente. Aca si se enmascara SOURCE,
+      TRANSIENT, OVERFLOW y OUTLIER, porque lo que se quiere es cielo limpio.
+    flags: [OVERFLOW, SUR_ERROR, NONFUNC, MISSING_DATA, HOT, COLD, NONLINEAR,
+            PERSIST, OUTLIER, SOURCE, TRANSIENT, BLOOM, SNOWBALL, HALO,
+            SATELLITE_HALO]
+  photometry:
+    titulo: Flags for masking pixels for photometry calculations
+    para_que: >-
+      Medir el flujo de la fuente. Deliberadamente NO incluye SOURCE, TRANSIENT,
+      OVERFLOW, OUTLIER, CROSSTALK ni los GHOST: enmascarar SOURCE borraria el
+      objetivo.
+    flags: [SUR_ERROR, NONFUNC, MISSING_DATA, HOT, COLD, NONLINEAR, PERSIST,
+            BLOOM, SNOWBALL, HALO, SATELLITE_HALO]
+
+# Pistas de interpretacion combinada que da el documento, utiles para el panel
+# de metadata (C6).
+combinations:
+  - flags: [TRANSIENT, SUR_ERROR]
+    significa: transitorio temprano, en la primera mitad de la exposicion
+  - flags: [OVERFLOW, SUR_ERROR]
+    significa: desborde temprano, en los primeros ~5 segundos
+  - flags: [OVERFLOW, TRANSIENT]
+    significa: >-
+      nucleo de un rayo cosmico grande o de un snowball; la varianza se estima con
+      la prescripcion de overflow
+
+# Ojo: esto NO es parte de la extension FLAGS por pixel.
+otros_bitmasks:
+  - nombre: CONTAINS_BAD_PIXEL
+    bit: 32
+    donde: bitmask `flags` de la fotometria de Level 3, no la capa FLAGS por pixel
+    descripcion: >-
+      Aviso resumen: se activa cuando algun pixel dentro de 2.5 pixeles de la
+      posicion de la fuente tiene cualquiera de TRANSIENT, OVERFLOW, SUR_ERROR,
+      NONFUNC, DICHROIC, MISSING_DATA, HOT, COLD, NONLINEAR, CROSSTALK, GHOST,
+      GHOST_FPA, GHOST_EXT, STREAK, PERSIST, BLOOM, SNOWBALL, HALO o
+      SATELLITE_HALO. Es conservador: es un aviso, no implica que haya que
+      descartar la medicion.
+  - nombre: FINAST
+    donde: salida del modulo de Astrometria Fina
+    descripcion: >-
+      El documento lo menciona como "Fine Astrometry flag" entre las salidas del
+      modulo, pero no esta en la Tabla 16. No confirmado como bit por pixel.
