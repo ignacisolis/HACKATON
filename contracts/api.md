@@ -212,7 +212,7 @@ Camilo puede escribir contra esto hoy.
 > los de la tabla de arriba.
 
 Los tipos de intercambio (`Frame`, `AlignedCube`, `SpectrumPoint`) están en
-[`core/types.py`](../core/types.py) con cada campo comentado. **`Frame` no
+[`core/datatypes.py`](../core/datatypes.py) con cada campo comentado. **`Frame` no
 incluye la PSF** a propósito: viene sin recortar (~4.9 MB) y es ~99 % del peso
 de un cutout.
 

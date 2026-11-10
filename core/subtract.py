@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.types import Frame  # noqa: F401
+from core.datatypes import Frame  # noqa: F401
 
 # Tolerancia por defecto para considerar dos exposiciones "de la misma banda".
 # Criterio: una fraccion del ancho de banda del propio cuadro. Con R ~ 40 en el

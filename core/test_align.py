@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import align as al  # noqa: E402
 from core import flags as fl  # noqa: E402
 from core import targets as tg  # noqa: E402
-from core.types import Frame  # noqa: E402
+from core.datatypes import Frame  # noqa: E402
 
 PIX_DEG = 6.2 / 3600.0   # escala de placa de SPHEREx
 

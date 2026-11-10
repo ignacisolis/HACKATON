@@ -24,7 +24,7 @@ cuando hay que actualizar el catálogo.
 | `test_targets.py` | 10 pruebas, incluida la verificación de época | pasan |
 | `flags.py` | Decodifica la capa `FLAGS` y aplica las máscaras del documento | listo |
 | `test_flags.py` | 35 pruebas: bits, máscaras y cruce con el header FITS | pasan |
-| `types.py` | `Frame`, `AlignedCube`, `SpectrumPoint`: la frontera con `backend/` | listo |
+| `datatypes.py` | `Frame`, `AlignedCube`, `SpectrumPoint`: la frontera con `backend/` | listo |
 | `align.py` | Alineación por WCS con movimiento propio (tarea 21) | **listo** |
 | `test_align.py` | 26 pruebas, incluido el criterio de aceptación | pasan |
 | `subtract.py` | Resta de imágenes comparables (tarea 22) | firmas, valida ya |

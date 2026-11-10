@@ -105,6 +105,30 @@ jobs:
               print("ok " + ruta)
           PY
 
+      - name: Ningun modulo de core/ le hace sombra a la stdlib
+        # Un archivo core/types.py se importa como `types` cuando se corre
+        # `python core/algo.py`, porque ahi sys.path[0] es core/. En Windows
+        # pasaba desapercibido (el interprete ya tiene types cargado al
+        # arrancar) y en Linux rompia con "partially initialized module types".
+        # Es el peor tipo de error: pasa en una maquina y falla en otra.
+        run: |
+          python - <<'PY'
+          import pathlib, sys
+
+          stdlib = set(sys.stdlib_module_names)
+          choques = []
+          for p in sorted(pathlib.Path("core").glob("*.py")):
+              if p.stem != "__init__" and p.stem in stdlib:
+                  choques.append(p.name)
+          if choques:
+              print("Estos archivos de core/ se llaman igual que un modulo de la")
+              print("biblioteca estandar: " + ", ".join(choques))
+              print("Renombralos. Al correr 'python core/algo.py', sys.path[0] es")
+              print("core/, asi que se importan en lugar del modulo real.")
+              sys.exit(1)
+          print("core/ limpio: ningun nombre choca con la stdlib")
+          PY
+
       - name: core/ no abre la red
         # La regla de la carpeta: funciones puras. Los unicos que pueden hablar
         # con el mundo son los dos scripts de mantenimiento.

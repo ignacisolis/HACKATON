@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from core.types import Frame, SpectrumPoint  # noqa: F401
+from core.datatypes import Frame, SpectrumPoint  # noqa: F401
 
 # Apertura por defecto, en pixeles de SPHEREx (6.2 arcsec/px). 2.5 px es el
 # radio que usa el propio pipeline de fotometria de Level 3 para decidir su

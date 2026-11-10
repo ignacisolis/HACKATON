@@ -42,7 +42,7 @@ import numpy as np
 
 from core import flags as fl
 from core import targets as tg
-from core.types import AlignedCube, Frame  # noqa: F401
+from core.datatypes import AlignedCube, Frame  # noqa: F401
 
 # Bit con el que se marcan los pixeles que quedaron sin dato tras el remuestreo.
 MISSING_DATA_BIT = fl.bit_of("MISSING_DATA")
