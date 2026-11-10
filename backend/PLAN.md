@@ -2,6 +2,7 @@
 
 Responsable: Camilo. Carpeta: `backend/` (+ `config/release.yaml`).
 Stack: Python 3.12 + FastAPI. Los IDs (#) son los del Tablero SPHEREx en Notion.
+**Entrega: 15 de noviembre de 2026.**
 
 ## Principios
 
@@ -17,15 +18,16 @@ Stack: Python 3.12 + FastAPI. Los IDs (#) son los del Tablero SPHEREx en Notion.
 
 | Fase | # | Tarea | Listo cuando | Estado |
 |---|---|---|---|---|
-| 1 | 12 | `config/release.yaml` + `app/settings.py` | Cambiar de release = editar el YAML | En curso |
-| 1 | 9 | `app/irsa.py` (TAP + cutouts) | Lista las observaciones de WISE 0855 | En curso |
-| 1 | 10 | `app/cache.py` caché compacta sin PSF | ~100 KB/exposición; 2ª consulta no toca IRSA | En curso |
+| 1 | 12 | `config/release.yaml` + `app/settings.py` | Cambiar de release = editar el YAML | En revisión (PR #1) |
+| 1 | 9 | `app/irsa.py` (TAP + cutouts) | Lista las observaciones de WISE 0855 | En revisión (PR #1) |
+| 1 | 10 | `app/cache.py` caché compacta sin PSF | ~100 KB/exposición; 2ª consulta no toca IRSA | En revisión (PR #1) |
 | 1 | 11 | `GET /api/frames` | Valida contra `contracts/fixtures/frames.json` | En curso (contrato pendiente) |
 | 1 | 13 | Desplegar backend público | URL pública responde `/api/frames` para WISE 0855 | Por hacer |
 | 2 | 20 | `GET /api/frame/{id}/meta` con bits de FLAGS | Valida contra `contracts/fixtures/frame-meta.json` | En curso (bits leídos del header) |
 | 3 | 24 | `GET /api/spectrum` | Llama a `core.spectrum()` y valida contra fixture | Bloqueado por `core.spectrum()` |
-| 4 | 26 | Precalcular los 4 objetivos | Cargan desde caché sin tocar IRSA | Bloqueado por `config/targets.yaml` |
-| 5 | 28 | Script de release + tests | Un release nuevo entra con un comando y los tests pasan | Por hacer |
+| 2 | — | `GET /api/coverage` (bandas, detectores, épocas) | El selector de banda sabe qué hay | Hecho |
+| 4 | 26 | `app/precompute.py` + `GET /api/targets` | Los objetivos cargan desde caché sin tocar IRSA | WISE 0855 listo; faltan 3 (`config/targets.yaml`) |
+| 5 | 28 | `app/release_update.py` + CI | Un release nuevo entra con un comando y los tests pasan | Hecho |
 
 ## Hallazgos de esta rama (útiles para el equipo)
 
@@ -34,6 +36,9 @@ Stack: Python 3.12 + FastAPI. Los IDs (#) son los del Tablero SPHEREx en Notion.
   11 COLD, 12 FULLSAMPLE, 14 PHANMISS, 15 NONLINEAR, 17 PERSIST, 19 OUTLIER, **21 SOURCE**
   (el bit que domina en la Fase 0 es "píxel de una fuente conocida", no contaminación).
   El backend los lee del archivo; `config/flags.yaml` (Nacho) puede sumar descripciones largas.
+- **Hay más de un release en IRSA** (`spherex.obscore`): `spherex_qr2` (2025-05 → 2026-07),
+  `spherex_qr3` (2026-07 → 2026-10), sus campos `*_deep` y `*_cal`. Cada QR trae exposiciones
+  nuevas: se suman todas las de ciencia. Para WISE 0855 `qr3` no aporta (no se observó en ese tramo).
 - Para WISE 0855, todas las observaciones son del release `qr2`, con 13 versiones de
   procesamiento (`l2b-v20-2025-241` … `l2b-v24-2026-135`) y **sin exposiciones duplicadas**
   entre versiones.
@@ -45,6 +50,8 @@ Stack: Python 3.12 + FastAPI. Los IDs (#) son los del Tablero SPHEREx en Notion.
 ## API que implementa hoy la rama (borrador hasta acordar `contracts/api.md`)
 
 - `GET /api/health`
+- `GET /api/coverage?ra=&dec=&size=` → observaciones por detector, fecha, época y banda (sin bajar cutouts).
+- `GET /api/targets` → objetivos de la demo con las coordenadas precalculadas.
 - `GET /api/frames?ra=&dec=&size=&band=&detector=` → lista de cuadros ordenados por fecha.
   `ra`/`dec` en grados o sexagesimal (`08h55m10.831s`). `band` = 1–102 (aprox.), `detector` = 1–6.
 - `GET /api/frame/{id}/image.png?ra=&dec=&size=&layer=` → cuadro renderizado (north-up).
@@ -53,5 +60,6 @@ Stack: Python 3.12 + FastAPI. Los IDs (#) son los del Tablero SPHEREx en Notion.
 ## Pendiente con el equipo
 
 - Que Bruno suba el kit (`contracts/api.md`, fixtures, `docs/EQUIPO.md`) para ajustar las respuestas.
-- `config/targets.yaml` (Nacho) para precalcular los 4 objetivos.
+- `config/targets.yaml` (Nacho) para precalcular los 4 objetivos. Formato en el docstring de `app/precompute.py`
+  (name, slug, ra, dec, epoch, pmra_masyr, pmdec_masyr, size_deg, source).
 - Proteger `main` no es posible en repo privado con plan gratuito: acuerdo de "todo entra por PR".

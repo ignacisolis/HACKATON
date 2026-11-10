@@ -84,9 +84,8 @@ def list_frames(ra: float, dec: float, size_deg: float, band: int | None = None,
 
     frames, missing = [], []
     for o in obs:
-        c = cache.get_cached(o.id, ra, dec, size_deg, s)
-        lam = c.wavelength_at(ra, dec) if c else None
-        if c is None:
+        ready, lam = cache.cached_wavelength(o.id, ra, dec, size_deg, s)
+        if not ready:
             missing.append(o)
         elif lam_range and (lam is None or not lam_range[0] <= lam < lam_range[1]):
             continue  # ya sabemos su λ y no cae en la banda pedida
@@ -99,7 +98,8 @@ def list_frames(ra: float, dec: float, size_deg: float, band: int | None = None,
             "wavelength_um": round(lam, 4) if lam is not None else None,
             "band": s.band_of(o.detector, lam) if lam is not None else None,
             "version": o.version,
-            "ready": c is not None,
+            "collection": o.collection,
+            "ready": ready,
             "image_url": f"/api/frame/{o.id}/image.png?{q}",
             "meta_url": f"/api/frame/{o.id}/meta?{q}",
         })
@@ -107,10 +107,62 @@ def list_frames(ra: float, dec: float, size_deg: float, band: int | None = None,
     queued = prefetch(missing, ra, dec, size_deg, s) if do_prefetch and missing else 0
     return {
         "query": {"ra": ra, "dec": dec, "size": size_deg, "band": band, "detector": detector},
-        "release": {"name": s.release_name, "label": s.release_label},
+        "release": {"collections": list(s.collections), "label": s.release_label},
         "count": len(frames),
         "pending": len(missing),
         "queued": queued,
         "complete": not missing,
         "frames": frames,
+    }
+
+
+def coverage(ra: float, dec: float, size_deg: float, s: Settings | None = None) -> dict:
+    """Qué hay en (ra, dec): observaciones por detector, fecha y época, sin bajar cutouts.
+
+    La banda exacta (1..102) necesita el λ del píxel, que solo se conoce con el cutout:
+    `bands` cuenta solo las exposiciones ya cacheadas y `bands_known` dice cuántas son.
+    """
+    s = s or get_settings()
+    obs = observations_at(ra, dec, s)
+    by_det: dict[int, int] = {}
+    by_date: dict[str, dict] = {}
+    by_coll: dict[str, int] = {}
+    bands: dict[int, int] = {}
+    known = 0
+    for o in obs:
+        by_det[o.detector] = by_det.get(o.detector, 0) + 1
+        by_coll[o.collection] = by_coll.get(o.collection, 0) + 1
+        day = Time(o.mjd_start, format="mjd").isot[:10]
+        d = by_date.setdefault(day, {"date": day, "count": 0, "detectors": set()})
+        d["count"] += 1
+        d["detectors"].add(o.detector)
+        _, lam = cache.cached_wavelength(o.id, ra, dec, size_deg, s)
+        if lam is not None:
+            known += 1
+            b = s.band_of(o.detector, lam)
+            if b is not None:
+                bands[b] = bands.get(b, 0) + 1
+
+    # Épocas: SPHEREx vuelve a la misma zona cada ~6 meses; se cortan huecos de >30 días.
+    epochs: list[dict] = []
+    for day in sorted(by_date):
+        mjd = Time(day).mjd
+        if not epochs or mjd - epochs[-1]["_last"] > 30:
+            epochs.append({"start": day, "end": day, "count": 0, "_last": mjd})
+        e = epochs[-1]
+        e["end"], e["_last"] = day, mjd
+        e["count"] += by_date[day]["count"]
+    for e in epochs:
+        del e["_last"]
+
+    return {
+        "query": {"ra": ra, "dec": dec, "size": size_deg},
+        "release": {"collections": list(s.collections), "label": s.release_label},
+        "total": len(obs),
+        "detectors": {str(k): by_det[k] for k in sorted(by_det)},
+        "collections": by_coll,
+        "dates": [{**v, "detectors": sorted(v["detectors"])} for _, v in sorted(by_date.items())],
+        "epochs": epochs,
+        "bands": {str(k): bands[k] for k in sorted(bands)},
+        "bands_known": known,
     }

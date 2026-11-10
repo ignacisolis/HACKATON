@@ -74,10 +74,8 @@ def save_observations(observations: list[irsa.Observation], s: Settings | None =
     s = s or get_settings()
     d = s.cache_dir / "obs"
     d.mkdir(parents=True, exist_ok=True)
-    for o in observations:
-        p = d / f"{o.id}.json"
-        if not p.exists():
-            p.write_text(json.dumps(o.to_dict()))
+    for o in observations:  # se reescribe: la ficha puede ganar campos (p. ej. collection)
+        (d / f"{o.id}.json").write_text(json.dumps(o.to_dict()))
 
 
 def load_observation(obs_id: str, s: Settings | None = None) -> irsa.Observation | None:
@@ -141,6 +139,23 @@ def get_cached(obs_id: str, ra: float, dec: float, size_deg: float,
     s = s or get_settings()
     p = _path(cutout_key(obs_id, ra, dec, size_deg), s)
     return _load(p) if p.exists() else None
+
+
+_wave_memo: dict[str, float | None] = {}
+
+
+def cached_wavelength(obs_id: str, ra: float, dec: float, size_deg: float,
+                      s: Settings | None = None) -> tuple[bool, float | None]:
+    """(¿está en caché?, λ en el objetivo) sin abrir el .npz más de una vez por proceso."""
+    s = s or get_settings()
+    key = f"{s.cache_dir}/{cutout_key(obs_id, ra, dec, size_deg)}"
+    if key in _wave_memo:
+        return True, _wave_memo[key]
+    c = get_cached(obs_id, ra, dec, size_deg, s)
+    if c is None:
+        return False, None
+    _wave_memo[key] = lam = c.wavelength_at(ra, dec)  # los .npz no cambian una vez escritos
+    return True, lam
 
 
 def get_cutout(obs: irsa.Observation, ra: float, dec: float, size_deg: float,

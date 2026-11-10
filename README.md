@@ -1,7 +1,8 @@
 # Visor web de SPHEREx: el cielo en el tiempo
 
-> Proyecto para el **Hackathon NASA · SPHEREx**. Nombre provisional del proyecto: _por definir_.
-> Estado: **Fase 0 (exploración de datos) en curso.** Fecha límite del hackathon: _por definir_.
+> Proyecto para el **Hackathon NASA · SPHEREx**. Nombre del proyecto: **HackatonNASA**.
+> Estado: **Fase 1 (MVP) en curso.** Fecha límite del hackathon: **15 de noviembre de 2026**.
+> Stack: Python + FastAPI (backend y ciencia) · frontend web (por confirmar por B).
 
 ---
 
@@ -149,7 +150,7 @@ Usuario ──► Frontend (visor, video, espectro, URL) ──► Backend (API)
 | **5. Actualización y robustez** (sem. 10) | Configuración de versión, script de datos nuevos, manejo de errores, pruebas automáticas | El proyecto sobrevive a una actualización de datos |
 | **6. Pulido y presentación** (sem. final) | Interfaz clara, Aladin/SIMBAD, README en inglés, video demo, pitch | Presentación final |
 
-_Las semanas son orientativas y deben ajustarse a la fecha límite real._
+_Las semanas eran orientativas: con entrega el **15 de noviembre** hay ~5 días, así que se prioriza la lista "Imprescindible" de abajo y lo demás entra solo si sobra tiempo._
 
 ### Prioridades si el tiempo aprieta
 1. **Imprescindible:** coordenadas → video, selector de banda, URL con coordenadas, los 4 objetos funcionando.
@@ -162,9 +163,9 @@ _Las semanas son orientativas y deben ajustarse a la fecha límite real._
 
 | Rol | Responsable | Es dueño de |
 |---|---|---|
-| **A · Datos y backend** | _por asignar_ | Acceso a IRSA, caché, API, configuración de versiones, script de actualización, despliegue del backend |
-| **B · Frontend y experiencia** | _por asignar_ | Formulario, reproductor, selector de banda, URL, panel de espectro, capa de máscaras, Aladin, despliegue de la web |
-| **C · Ciencia y procesamiento** | _por asignar_ | Alineación, imagen de referencia, restas, espectros, combinación de detectores, validación con los 4 objetos, documentación y presentación |
+| **A · Datos y backend** | Camilo (rama `back`) | Acceso a IRSA, caché, API, configuración de versiones, script de actualización, despliegue del backend |
+| **B · Frontend y experiencia** | Bruno (rama `front`) | Formulario, reproductor, selector de banda, URL, panel de espectro, capa de máscaras, Aladin, despliegue de la web |
+| **C · Ciencia y procesamiento** | Ignacio "Nacho" (rama `ciencias`) | Alineación, imagen de referencia, restas, espectros, combinación de detectores, validación con los 4 objetos, documentación y presentación |
 
 Reglas de trabajo:
 - Acordar la API en la primera semana, para que B trabaje con datos falsos mientras A termina el backend real.
@@ -195,8 +196,9 @@ Reglas de trabajo:
 - [ ] Significado de cada bit de `FLAGS` (Explanatory Supplement).
 - [ ] Confirmar si algún rango de longitud de onda se solapa entre detectores.
 - [ ] Probar la descarga y extracción de espectros con datos reales.
-- [ ] Fecha límite del hackathon y lenguajes que maneja cada integrante (para fijar el stack, por ejemplo Python + FastAPI y JavaScript).
-- [ ] Definir el nombre del proyecto y asignar roles.
+- [x] Fecha límite del hackathon: 15 de noviembre de 2026.
+- [x] Nombre del proyecto (HackatonNASA) y roles (A Camilo, B Bruno, C Nacho).
+- [ ] Stack del frontend (lo define B).
 
 ## 11. Estado actual
 

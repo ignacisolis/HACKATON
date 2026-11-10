@@ -15,6 +15,8 @@ import httpx
 from .settings import Settings, get_settings
 
 _FILE_RE = re.compile(r"level2_(?P<id>.+?)_spx_(?P<version>l2b-v\d+-\d{4}-\d+)\.fits$")
+_DID_RE = re.compile(r"^ivo://irsa\.ipac/(?P<collection>[A-Za-z0-9_]+)\?")
+_COLLECTION_OK = re.compile(r"^[A-Za-z0-9_]+$")
 
 
 @dataclass(frozen=True)
@@ -29,6 +31,7 @@ class Observation:
     lambda_min_um: float
     lambda_max_um: float
     size_bytes: int
+    collection: str = ""  # p. ej. "spherex_qr2" o "spherex_qr3_deep"
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -49,17 +52,25 @@ def _tap(query: str, s: Settings) -> list[dict]:
     return list(csv.DictReader(io.StringIO(r.text)))
 
 
+def _collection_filter(s: Settings) -> str:
+    for c in s.collections:
+        if not _COLLECTION_OK.match(c):
+            raise ValueError(f"nombre de colección inválido en config: {c!r}")
+    ors = " OR ".join(f"p.obs_publisher_did LIKE 'ivo://irsa.ipac/{c}?%'" for c in s.collections)
+    return f"({ors})"
+
+
 def build_query(ra: float, dec: float, s: Settings) -> str:
     ra, dec = float(ra), float(dec)  # nunca se interpola texto del usuario en ADQL
     return f"""
-    SELECT a.uri, a.contentlength,
+    SELECT a.uri, a.contentlength, p.obs_publisher_did,
            p.time_bounds_lower, p.time_bounds_upper, p.time_exposure,
            p.energy_bandpassname, p.energy_bounds_lower, p.energy_bounds_upper
     FROM {s.artifact_table} a
     JOIN {s.plane_table} p ON a.planeid = p.planeid
     WHERE 1 = CONTAINS(POINT('ICRS', {ra!r}, {dec!r}), p.poly)
       AND a.producttype = 'science'
-      AND a.uri LIKE '%/spherex/{s.release_name}/%'
+      AND {_collection_filter(s)}
     ORDER BY p.time_bounds_lower
     """
 
@@ -85,11 +96,21 @@ def parse_rows(rows: list[dict], s: Settings) -> list[Observation]:
             lambda_min_um=float(row["energy_bounds_lower"]) * 1e6,
             lambda_max_um=float(row["energy_bounds_upper"]) * 1e6,
             size_bytes=int(row["contentlength"] or 0),
+            collection=_collection_of(row.get("obs_publisher_did")),
         )
         prev = by_id.get(obs.id)
         if prev is None or _version_key(obs.version) > _version_key(prev.version):
             by_id[obs.id] = obs
     return sorted(by_id.values(), key=lambda o: (o.mjd_start, o.detector))
+
+
+def _float_or_none(v: str | None) -> float | None:
+    return float(v) if v not in (None, "") else None
+
+
+def _collection_of(did: str | None) -> str:
+    m = _DID_RE.match(did or "")
+    return m["collection"] if m else ""
 
 
 def _version_key(v: str) -> tuple[int, ...]:
@@ -100,6 +121,20 @@ def query_observations(ra: float, dec: float, s: Settings | None = None) -> list
     """Observaciones de SPHEREx cuyo campo contiene (ra, dec), ordenadas por fecha."""
     s = s or get_settings()
     return parse_rows(_tap(build_query(ra, dec, s), s), s)
+
+
+def list_collections(s: Settings | None = None) -> list[dict]:
+    """Colecciones SPHEREx publicadas en IRSA, con nº de planos y rango de fechas (MJD). Tarda ~1 min."""
+    s = s or get_settings()
+    rows = _tap(f"""
+    SELECT obs_collection, COUNT(*) AS n, MIN(t_min) AS mjd_min, MAX(t_max) AS mjd_max
+    FROM {s.obscore_table} GROUP BY obs_collection
+    """, s)
+    return sorted(
+        ({"collection": r["obs_collection"], "n": int(r["n"]),
+          "mjd_min": _float_or_none(r["mjd_min"]), "mjd_max": _float_or_none(r["mjd_max"])} for r in rows),
+        key=lambda r: (r["mjd_min"] is None, r["mjd_min"] or 0),  # las colecciones sin fechas (cal) al final
+    )
 
 
 def cutout_url(obs_uri: str, ra: float, dec: float, size_deg: float, s: Settings | None = None) -> str:

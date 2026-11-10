@@ -2,9 +2,10 @@
 # Pasar a otro release (p. ej. el final) = editar este archivo, sin tocar código (C1).
 
 release:
-  # Carpeta del release dentro de la ruta de IRSA: .../data/spherex/<name>/level2/...
-  name: qr2
-  label: "SPHEREx Quick Release 2"
+  label: "SPHEREx Quick Releases (QR2 + QR3)"
+  # Colecciones de IRSA que se suman (cada QR trae exposiciones NUEVAS, no reprocesa las viejas).
+  # Las ve `python -m app.release_update`; las *_cal (calibración) no se usan.
+  collections: [spherex_qr2, spherex_qr2_deep, spherex_qr3, spherex_qr3_deep]
   # Versiones de procesamiento permitidas (l2b-vNN-AAAA-DDD). Vacío = todas.
   versions: []
 
@@ -13,6 +14,7 @@ irsa:
   data_base_url: https://irsa.ipac.caltech.edu/
   plane_table: spherex.plane
   artifact_table: spherex.artifact
+  obscore_table: spherex.obscore
   timeout_s: 180
   # IRSA pide no pasar de ~10 conexiones simultáneas.
   max_workers: 8

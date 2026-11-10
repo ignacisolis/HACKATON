@@ -11,7 +11,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 
-from . import cache, frames, irsa, render
+from . import cache, frames, irsa, precompute, render
 from .settings import get_settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -58,7 +58,7 @@ def cutout_or_502(o: irsa.Observation, ra: float, dec: float, size: float) -> ca
 @app.get("/api/health")
 def health():
     s = get_settings()
-    return {"status": "ok", "release": s.release_name, "label": s.release_label}
+    return {"status": "ok", "collections": list(s.collections), "label": s.release_label}
 
 
 @app.get("/api/frames")
@@ -72,6 +72,21 @@ def get_frames(
     ra_d, dec_d = parse_coords(ra, dec)
     try:
         return frames.list_frames(ra_d, dec_d, check_size(size), band, detector, prefetch)
+    except irsa.IrsaError as e:
+        raise HTTPException(502, str(e)) from e
+
+
+@app.get("/api/targets")
+def get_targets():
+    """Objetivos de la demo con las coordenadas EXACTAS que están precalculadas en caché."""
+    return {"targets": precompute.load_summary()}
+
+
+@app.get("/api/coverage")
+def get_coverage(ra: str, dec: str, size: float | None = None):
+    ra_d, dec_d = parse_coords(ra, dec)
+    try:
+        return frames.coverage(ra_d, dec_d, check_size(size))
     except irsa.IrsaError as e:
         raise HTTPException(502, str(e)) from e
 
