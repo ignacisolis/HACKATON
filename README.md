@@ -102,9 +102,18 @@ Quien reciba ese link ve exactamente el mismo punto del cielo, la misma banda y 
 ### Comparar imágenes
 - El flujo en el objetivo varía de ~0.15 a ~0.8 MJy/sr según el detector, y sigue la forma de un fondo. **No se pueden restar imágenes de distinta longitud de onda.** Regla: restar solo exposiciones del mismo detector y con longitud de onda parecida, tras alinearlas con el WCS.
 
-### Movimiento propio (muy importante)
-- Las coordenadas de WISE 0855 del enunciado parecen ser de ~2010 (coinciden con su designación WISE). Con ~8″/año de movimiento propio, en 2026 estaría a ~126″, es decir ~20 píxeles de esa posición _(valores por verificar en SIMBAD)_.
-- Lo mismo aplica a eps Ind (~4.7″/año). Las herramientas deben aceptar movimiento propio, o se mide cielo vacío.
+### Movimiento propio (muy importante) — ✅ verificado
+
+> Medido contra SIMBAD en la tarea 6. Los valores de abajo ya no son inferencia.
+> Detalle y fuentes en [`docs/ciencia.md`](docs/ciencia.md) y
+> [`config/targets.yaml`](config/targets.yaml).
+
+- Las coordenadas de WISE 0855 del enunciado son de la **época de descubrimiento WISE (~2010.5)**, codificadas en su designación. Su movimiento propio es de **8.15″/año**, así que al final de la ventana de SPHEREx el objeto está a **132.9″ = 21.4 píxeles** de esa posición.
+- eps Ind B se mueve a **4.68″/año**: **20.2 píxeles** de deriva entre J2000 y 2026.
+- **RW Aur y R Dra no necesitan corrección**: 0.0275″/año y 0.0215″/año, o sea menos de un cuarto de píxel en 26 años.
+- Las coordenadas de catálogo están a época **J2000.0**, confirmado con una prueba: propagar WISE 0855 de J2000 a 2010.5 reproduce su designación con **0.41″** de diferencia, cuando un año de error de época daría 8.15″.
+- Apuntar a las coordenadas del enunciado **no produce un error visible**: devuelve un recorte de cielo que parece normal, lleno de otras fuentes, sin el objetivo.
+- **Pero dentro de los datos de SPHEREx el movimiento es chico:** WISE 0855 se desplaza solo **1.35 px** entre su primera y su última observación, y eps Ind B **1.09 px**. Un video no alcanza para mostrarlo; hace falta la resta de imágenes. Ver [`docs/ciencia.md`](docs/ciencia.md) sección 3.2.
 
 ### Resolución de eps Ind B
 - La separación entre las dos enanas cafés es de ~0.72″, muy menor al píxel de ~6.2″: **aparecerán mezcladas como un solo objeto**. No se promete verlas como dos puntos.
@@ -113,8 +122,16 @@ Quien reciba ese link ve exactamente el mismo punto del cielo, la misma banda y 
 - La consulta TAP a IRSA tardó ~8.6 s para WISE 0855. Los cutouts y la resolución de nombres (Sesame) fueron lo más lento, y Sesame falló con timeouts desde nuestra red.
 - Una consulta de varios segundos es demasiado lenta para una web interactiva: hay que **cachear y precalcular**.
 
-### FLAGS
-- Un bit domina (el 21, ~41 % de los píxeles). El significado exacto de cada bit **debe tomarse del Explanatory Supplement**; no lo adivinamos.
+### FLAGS — ✅ resuelto
+
+> Los 23 bits documentados están transcritos en
+> [`config/flags.yaml`](config/flags.yaml), del Explanatory Supplement
+> SSDC-DP-017 v2.0 (Tabla 16).
+
+- **El bit 21 que dominaba (~41 % de los píxeles) es `SOURCE`: "píxel mapeado a una fuente conocida".** No es un defecto, es la máscara de fuentes. Es justamente la "máscara de contaminación" que pide la consideración C6.
+- **No existe "la máscara de píxeles malos".** El documento da **dos listas distintas**: para estimar el **fondo** se enmascara `SOURCE`, `TRANSIENT`, `OVERFLOW` y `OUTLIER`; para **fotometría** esos cuatro **no** se enmascaran. Enmascarar `SOURCE` al medir una fuente borra el objetivo.
+- Hay **9 bits sin significado documentado** (3, 4, 5, 8, 13, 16, 18, 30, 31). Siguen sin asumirse: si alguno aparece activo en datos reales, es señal de que el documento quedó viejo, y `core.flags.undocumented_bits_present()` lo detecta.
+- `FULLSAMPLE` (bit 12) no se enmascara: es informativo, no un defecto. Enmascararlo tiraría dato bueno.
 
 ---
 
@@ -160,17 +177,142 @@ _Las semanas son orientativas y deben ajustarse a la fecha límite real._
 
 ## 8. División del trabajo (3 personas)
 
-| Rol | Responsable | Es dueño de |
-|---|---|---|
-| **A · Datos y backend** | _por asignar_ | Acceso a IRSA, caché, API, configuración de versiones, script de actualización, despliegue del backend |
-| **B · Frontend y experiencia** | _por asignar_ | Formulario, reproductor, selector de banda, URL, panel de espectro, capa de máscaras, Aladin, despliegue de la web |
-| **C · Ciencia y procesamiento** | _por asignar_ | Alineación, imagen de referencia, restas, espectros, combinación de detectores, validación con los 4 objetos, documentación y presentación |
+> Reparto **confirmado** (Nacho, 2026-11-10). Falta solo volcarlo a
+> `docs/EQUIPO.md`, que es la condición de cierre de la tarea 2 del Tablero.
+
+| Rol | Responsable | Rama | Carpeta | Es dueño de |
+|---|---|---|---|---|
+| **A · Datos y backend** | Camilo | `back` | `backend/` | Acceso a IRSA, caché, API, configuración de versiones, script de actualización, despliegue del backend. También integración |
+| **B · Frontend y experiencia** | Bruno | `front` | `frontend/` | Formulario, reproductor, selector de banda, URL, panel de espectro, capa de máscaras, Aladin, despliegue de la web |
+| **C · Ciencia y procesamiento** | Nacho | `ciencias` | `core/` | Alineación, imagen de referencia, restas, espectros, combinación de detectores, validación con los 4 objetos, documentación y presentación |
 
 Reglas de trabajo:
 - Acordar la API en la primera semana, para que B trabaje con datos falsos mientras A termina el backend real.
 - C entrega funciones puras de Python (reciben arrays, devuelven arrays) que A llama desde la API.
 - Un solo repositorio con carpetas separadas y ramas por persona; sincronización breve 2 o 3 veces por semana.
+- Cada uno trabaja **solo en su carpeta y en su rama**. Lo que cruza carpetas va en `contracts/api.md`.
 - Un responsable de integración (sugerido: A).
+
+---
+
+## 8.1 Kit de herramientas por persona
+
+Qué instala cada uno, con qué servicios habla y qué trampas ya están
+documentadas, para no volver a tropezar con ellas.
+
+### Kit común (los tres)
+
+```bash
+git clone https://github.com/ignacisolis/HACKATON.git
+cd HACKATON
+git checkout <tu rama>        # ciencias | front | back
+```
+
+| Herramienta | Para qué |
+|---|---|
+| **Python 3.12** | Todo el lado de datos y ciencia. En la máquina de Nacho: 3.12.10 |
+| **Git + GitHub** | Una rama por persona; nadie commitea en `main` |
+| **Notion** | [Tablero](https://app.notion.com/p/12b60357f1d74d24a962ce0aeafeb614) para el estado de las tareas, [Bitácora](https://app.notion.com/p/6d7bd37960934ddcafb66079012cb849) al terminar cada sesión |
+| **`contracts/api.md`** | La única fuente de verdad de lo que se pasa entre carpetas |
+
+> El **stack** de la web todavía no está decidido: es la tarea 1 del Tablero.
+> Lo que sigue marcado como _propuesto_ puede cambiar en la primera sync.
+
+---
+
+### Camilo · A — Datos y backend — rama `back`, carpeta `backend/`
+
+```bash
+pip install numpy astropy pyyaml httpx
+pip install fastapi uvicorn          # propuesto, pendiente de la tarea 1
+```
+
+| Herramienta | Para qué |
+|---|---|
+| **`astropy`** | Abrir los FITS MEF, leer el WCS espacial y el espectral (`key="W"`) |
+| **`numpy`** | Los arrays de `IMAGE`, `VARIANCE`, `FLAGS`, `ZODI` |
+| **`pyyaml`** | Leer `config/release.yaml` y `config/targets.yaml`. Es lo que hace que cambiar de release sea editar un archivo (C1) |
+| **`httpx`** | Bajar cutouts en paralelo. IRSA pide no pasarse de ~10 conexiones |
+| **FastAPI + uvicorn** | La API. _Propuesto_ |
+
+**Servicios con los que habla** (es el único rol que toca IRSA):
+
+| Servicio | URL | Estado |
+|---|---|---|
+| IRSA TAP | `https://irsa.ipac.caltech.edu/TAP/sync` | funciona, **~16 s** la primera consulta |
+| Tablas | `spherex.plane` (polígono por observación), `spherex.artifact` | |
+| Cutouts | a la URL del artifact se le agrega `?center=RA,Dec&size=...` | |
+
+**Lo que le pide a `core/`** — antes de recortar, preguntar dónde está el objeto ESE día:
+
+```python
+import core.targets as t
+ra, dec = t.target_position("wise_0855", mjd)   # MJD del header FITS
+```
+
+**Trampas ya documentadas:**
+- La extensión **`PSF` viene sin recortar** (~4.9 MB) y es ~99 % del peso de un cutout de 59×59. La caché compacta la tira.
+- **`ZODI` no está restado** de `IMAGE`. Es un modelo de referencia.
+- Esos **16 s** de latencia confirman que la caché y el precálculo de los 4 objetivos **no son una optimización opcional**: sin eso la web no es interactiva.
+
+---
+
+### Bruno · B — Frontend — rama `front`, carpeta `frontend/`
+
+| Herramienta | Para qué | Estado |
+|---|---|---|
+| **`contracts/fixtures/`** | Los 12 cuadros falsos. Permiten construir todo el visor **sin esperar al backend** | listo |
+| Framework web | Formulario, reproductor, selector de banda | _por decidir, tarea 1_ |
+| Librería de gráficos | El panel de espectro (λ vs flujo) | _por decidir_ |
+| **Aladin Lite** | Abrir la misma posición en un visor de cielo estándar (C9) | extra |
+| Parámetros de URL | `?ra=&dec=&band=&fov=` para que la vista sea compartible (C4) | — |
+
+**Lo que recibe del backend:** cada cuadro trae fecha, detector y longitud de onda. El video se filtra por banda.
+
+**Trampas ya documentadas:**
+- Hay solo **2 o 3 épocas por banda**. Un video de una sola banda es cortísimo; para llegar a las 27 fechas hay que mezclar bandas, y eso hay que mostrarlo en la interfaz.
+- Un píxel son **6.2″**. No prometer ver pares de estrellas separados: eps Ind Ba/Bb (0.72″) y RW Aur A/B (~1.4″) salen como un solo punto.
+- La meta ya incluye **"video o series de tiempo"**, no solo video.
+
+---
+
+### Nacho · C — Ciencia — rama `ciencias`, carpeta `core/`
+
+```bash
+pip install numpy astropy pyyaml certifi
+pip install matplotlib               # para graficar espectros
+```
+
+| Herramienta | Para qué |
+|---|---|
+| **`astropy`** | WCS, `SkyCoord`, propagación de movimiento propio, fotometría |
+| **`numpy`** | Alineación, restas, combinación ponderada |
+| **`pyyaml`** | Escribir y leer `config/targets.yaml` y `config/flags.yaml` |
+| **`certifi`** | Imprescindible: sin su bundle de certificados, SIMBAD falla el TLS |
+
+**Servicios con los que habla:**
+
+| Servicio | URL | Estado |
+|---|---|---|
+| SIMBAD TAP | `https://simbad.harvard.edu/simbad/sim-tap/sync` | **funciona**, ~0.5 s |
+| ~~SIMBAD Estrasburgo~~ | `simbad.u-strasbg.fr` | **no resuelve por DNS** |
+| ~~SIMBAD CDS~~ | `simbad.cds.unistra.fr` | falla el TLS y su TAP da 404 |
+| Explanatory Supplement | [PDF de IRSA](https://irsa.ipac.caltech.edu/data/SPHEREx/docs/SPHEREx_Expsupp_QR.pdf) | fuente de los bits de `FLAGS` |
+
+**`astroquery` no se usa.** Su resolución de nombres apunta por defecto a los
+hosts de Estrasburgo, y por eso Sesame daba timeouts. Las consultas van con
+`urllib` + `certifi` directo al TAP.
+
+**Lo que entrega:** funciones puras en `core/` — reciben arrays, devuelven
+arrays. Nada de `core/` abre la red ni sabe que existe una web. La única
+excepción es `core/fetch_targets.py`, que es un script de mantenimiento.
+
+**Trampas ya documentadas:**
+- **No restar imágenes de distinta longitud de onda.** Solo mismo detector y λ parecida, y después de alinear por WCS.
+- Las coordenadas del enunciado para WISE 0855 están a **21.4 píxeles** del objeto en la era SPHEREx. Apuntar ahí no da error: da cielo vacío que parece normal.
+- El significado de cada bit de `FLAGS` **se saca del Explanatory Supplement, no se adivina**.
+
+Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](docs/ciencia.md).
 
 ---
 
@@ -189,37 +331,64 @@ Reglas de trabajo:
 
 ## 10. Pendientes abiertos
 
-- [ ] Coordenadas verificadas de **eps Ind B** y **R Dra** (SIMBAD no respondió desde nuestra red).
-- [ ] Verificar el **movimiento propio** y la **época** de las coordenadas de WISE 0855.
-- [ ] Tabla de cobertura de los otros 3 objetivos (nº de observaciones, fechas, detectores).
-- [ ] Significado de cada bit de `FLAGS` (Explanatory Supplement).
-- [ ] Confirmar si algún rango de longitud de onda se solapa entre detectores.
+- [x] ~~Coordenadas verificadas de **eps Ind B** y **R Dra**~~ → hecho en la tarea 6. SIMBAD **sí responde**: el problema no era la red sino el certificado TLS y un host que ya no existe. Ver sección 8.1.
+- [x] ~~Verificar el **movimiento propio** y la **época** de las coordenadas de WISE 0855~~ → hecho y comprobado con una prueba automática.
+- [x] ~~Tabla de cobertura de los otros 3 objetivos~~ → hecho en la tarea 7: `config/coverage.yaml`. Los 4 objetivos tienen cobertura de los 6 detectores.
+- [x] ~~Significado de cada bit de `FLAGS`~~ → hecho en la tarea 8: `config/flags.yaml`, 23 bits del Explanatory Supplement. Quedan 9 bits sin documentar en la propia fuente.
+- [x] ~~Confirmar si algún rango de longitud de onda se solapa entre detectores~~ → **no se solapan**, se encadenan: 0.75–5.01 µm sin huecos, con costuras de ~0.02 µm. Ver `docs/ciencia.md` sección 3.4.
 - [ ] Probar la descarga y extracción de espectros con datos reales.
 - [ ] Fecha límite del hackathon y lenguajes que maneja cada integrante (para fijar el stack, por ejemplo Python + FastAPI y JavaScript).
-- [ ] Definir el nombre del proyecto y asignar roles.
+- [ ] Definir el nombre del proyecto.
+- [ ] Volcar el reparto de roles a `docs/EQUIPO.md` (los roles ya están confirmados: ver sección 8).
 
 ## 11. Estado actual
 
 - [x] Consulta TAP a IRSA funcionando (WISE 0855: 256 observaciones, 27 fechas).
 - [x] Notebook `fase0_spherex_explorar_fits.ipynb`: exploración de las extensiones del FITS.
-- [x] Módulo `spherex_espectros.py`: caché compacta, fotometría de apertura, movimiento propio, combinación ponderada y gráfico (probado con datos sintéticos; la descarga real aún no).
+- [x] Repo en GitHub con una rama por persona: `ciencias`, `front` y `back`.
+- [x] **Astrometría de los 4 objetivos** (`config/targets.yaml`) con RA, Dec, época, movimiento propio, paralaje y bibcode de cada medición.
+- [x] **`core/targets.py`**: funciones puras que propagan una posición a la fecha de cada observación. 10 pruebas en `core/test_targets.py`, todas pasan.
+- [x] **Bits de `FLAGS`** (`config/flags.yaml`) y `core/flags.py` para decodificarlos y aplicar las máscaras que recomienda el documento. 26 pruebas en `core/test_flags.py`, todas pasan.
+- [x] **Cobertura de los 4 objetivos** (`config/coverage.yaml`): observaciones, fechas, detectores y longitud de onda por detector.
+- [ ] `core/align.py`, `core/subtract.py` y `core/spectrum.py` (tareas 21, 22 y 23).
 - [ ] Todo lo demás del roadmap (Fases 1 a 6).
+
+> **Corrección:** las versiones anteriores de este README daban por hecho un
+> módulo `spherex_espectros.py` con caché compacta, fotometría de apertura y
+> combinación ponderada, "probado con datos sintéticos". **Ese archivo nunca
+> existió** en el repositorio, en ningún commit del historial. La funcionalidad
+> hay que escribirla, y va partida en `align.py`, `subtract.py` y `spectrum.py`,
+> que es como la piden las tareas 21, 22 y 23 del Tablero.
 
 ## 12. Cómo ejecutar lo que ya existe
 
 ```bash
-pip install numpy astropy astroquery matplotlib
+pip install numpy astropy pyyaml certifi matplotlib
 ```
 
-1. Abre `fase0_spherex_explorar_fits.ipynb` y ejecuta las celdas **en orden** (el objetivo, la consulta TAP y el cutout deben correrse antes de las celdas que usan `coord`, `obs` y `hdul`).
-2. Para espectros, deja `spherex_espectros.py` junto al notebook y usa:
+`astroquery` **no** hace falta y conviene no usarlo: su resolución de nombres
+apunta a hosts de SIMBAD que ya no responden (ver sección 8.1).
+
+### Astrometría de los objetivos
+
+```bash
+python core/targets.py            # tabla resumen de los 4 objetivos
+python core/test_targets.py       # 10 pruebas, incluida la de la época
+python core/fetch_targets.py      # regenera config/targets.yaml desde SIMBAD
+```
+
+Desde código, para saber dónde apuntar en una fecha dada:
 
 ```python
-import spherex_espectros as se
-tab  = se.extraer_espectro(coord, obs, max_obs=12, detectores=["D2"])
-comb = se.combinar_espectro(tab)
-se.graficar_espectro(tab, comb)
+import core.targets as t
+ra, dec = t.target_position("wise_0855", 61174.0)   # MJD del header FITS
 ```
+
+### Notebook de exploración
+
+Abre `fase0_spherex_explorar_fits.ipynb` y ejecuta las celdas **en orden**: el
+objetivo, la consulta TAP y el cutout deben correrse antes de las celdas que
+usan `coord`, `obs` y `hdul`.
 
 ## 13. Fuentes
 
