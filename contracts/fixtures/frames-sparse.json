@@ -1,0 +1,696 @@
+{
+  "_fixture_note": "Fechas, detectores y longitudes de onda REALES, medidos contra IRSA. Los flujos y flagged_fraction son inventados.",
+  "query": {
+    "ra": 133.75894,
+    "dec": -7.24211,
+    "size": 0.1,
+    "target": "wise_0855",
+    "resolved_from": "targets.yaml + movimiento propio",
+    "coord_epoch_applied": "2026-05-14"
+  },
+  "n_frames": 256,
+  "n_dates": 27,
+  "_frames_in_this_fixture": 40,
+  "frames": [
+    {
+      "id": "l2b-v20-2025-251/level2_20250505_1D1",
+      "mjd": 60800.5,
+      "date": "2025-05-05T12:00:00.000",
+      "detector": "D1",
+      "wavelength_um": 1.0328,
+      "bandwidth_um": 0.0264,
+      "band": 8,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/0/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.495,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20250505_1D4",
+      "mjd": 60800.5,
+      "date": "2025-05-05T12:00:00.000",
+      "detector": "D4",
+      "wavelength_um": 3.4214,
+      "bandwidth_um": 0.098,
+      "band": 64,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/27/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.803,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20250506_1D2",
+      "mjd": 60801.5,
+      "date": "2025-05-06T12:00:00.000",
+      "detector": "D2",
+      "wavelength_um": 1.5726,
+      "bandwidth_um": 0.038,
+      "band": 21,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/1/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.728,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20250506_1D5",
+      "mjd": 60801.5,
+      "date": "2025-05-06T12:00:00.000",
+      "detector": "D5",
+      "wavelength_um": 4.0952,
+      "bandwidth_um": 0.0367,
+      "band": 80,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/28/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.612,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251031_1D3",
+      "mjd": 60979.5,
+      "date": "2025-10-31T12:00:00.000",
+      "detector": "D3",
+      "wavelength_um": 1.7059,
+      "bandwidth_um": 0.042,
+      "band": 24,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/2/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.978,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251031_1D6",
+      "mjd": 60979.5,
+      "date": "2025-10-31T12:00:00.000",
+      "detector": "D6",
+      "wavelength_um": 4.4951,
+      "bandwidth_um": 0.0352,
+      "band": 90,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/29/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.203,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251103_1D4",
+      "mjd": 60982.5,
+      "date": "2025-11-03T12:00:00.000",
+      "detector": "D4",
+      "wavelength_um": 3.5022,
+      "bandwidth_um": 0.1004,
+      "band": 66,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/3/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.807,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251103_1D1",
+      "mjd": 60982.5,
+      "date": "2025-11-03T12:00:00.000",
+      "detector": "D1",
+      "wavelength_um": 0.9936,
+      "bandwidth_um": 0.0254,
+      "band": 7,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/30/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.524,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251107_1D5",
+      "mjd": 60986.5,
+      "date": "2025-11-07T12:00:00.000",
+      "detector": "D5",
+      "wavelength_um": 3.8906,
+      "bandwidth_um": 0.0349,
+      "band": 75,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/4/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.505,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251107_1D2",
+      "mjd": 60986.5,
+      "date": "2025-11-07T12:00:00.000",
+      "detector": "D2",
+      "wavelength_um": 1.4123,
+      "bandwidth_um": 0.0341,
+      "band": 17,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/31/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.788,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251108_1D6",
+      "mjd": 60987.5,
+      "date": "2025-11-08T12:00:00.000",
+      "detector": "D6",
+      "wavelength_um": 4.6333,
+      "bandwidth_um": 0.0363,
+      "band": 93,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/5/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.934,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251108_1D3",
+      "mjd": 60987.5,
+      "date": "2025-11-08T12:00:00.000",
+      "detector": "D3",
+      "wavelength_um": 2.1407,
+      "bandwidth_um": 0.0527,
+      "band": 34,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/32/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.598,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251110_1D1",
+      "mjd": 60989.5,
+      "date": "2025-11-10T12:00:00.000",
+      "detector": "D1",
+      "wavelength_um": 0.9845,
+      "bandwidth_um": 0.0252,
+      "band": 7,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/6/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.84,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251110_1D4",
+      "mjd": 60989.5,
+      "date": "2025-11-10T12:00:00.000",
+      "detector": "D4",
+      "wavelength_um": 3.2105,
+      "bandwidth_um": 0.092,
+      "band": 59,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/33/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.374,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251114_1D2",
+      "mjd": 60993.5,
+      "date": "2025-11-14T12:00:00.000",
+      "detector": "D2",
+      "wavelength_um": 1.3457,
+      "bandwidth_um": 0.0325,
+      "band": 15,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/7/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.305,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251114_1D5",
+      "mjd": 60993.5,
+      "date": "2025-11-14T12:00:00.000",
+      "detector": "D5",
+      "wavelength_um": 3.8304,
+      "bandwidth_um": 0.0343,
+      "band": 74,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/34/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.493,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251211_1D3",
+      "mjd": 61020.5,
+      "date": "2025-12-11T12:00:00.000",
+      "detector": "D3",
+      "wavelength_um": 2.0763,
+      "bandwidth_um": 0.0511,
+      "band": 32,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/8/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.157,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251211_1D6",
+      "mjd": 61020.5,
+      "date": "2025-12-11T12:00:00.000",
+      "detector": "D6",
+      "wavelength_um": 4.5398,
+      "bandwidth_um": 0.0355,
+      "band": 91,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/35/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.468,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251212_1D4",
+      "mjd": 61021.5,
+      "date": "2025-12-12T12:00:00.000",
+      "detector": "D4",
+      "wavelength_um": 3.5983,
+      "bandwidth_um": 0.1031,
+      "band": 69,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/9/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.668,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251212_1D1",
+      "mjd": 61021.5,
+      "date": "2025-12-12T12:00:00.000",
+      "detector": "D1",
+      "wavelength_um": 1.0623,
+      "bandwidth_um": 0.0272,
+      "band": 8,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/36/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.311,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251213_1D5",
+      "mjd": 61022.5,
+      "date": "2025-12-13T12:00:00.000",
+      "detector": "D5",
+      "wavelength_um": 4.2803,
+      "bandwidth_um": 0.0384,
+      "band": 85,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/10/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.419,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20251213_1D2",
+      "mjd": 61022.5,
+      "date": "2025-12-13T12:00:00.000",
+      "detector": "D2",
+      "wavelength_um": 1.1352,
+      "bandwidth_um": 0.0274,
+      "band": 10,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/37/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.353,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260421_1D6",
+      "mjd": 61151.5,
+      "date": "2026-04-21T12:00:00.000",
+      "detector": "D6",
+      "wavelength_um": 4.9921,
+      "bandwidth_um": 0.0391,
+      "band": 102,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/11/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.904,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260421_1D3",
+      "mjd": 61151.5,
+      "date": "2026-04-21T12:00:00.000",
+      "detector": "D3",
+      "wavelength_um": 1.8663,
+      "bandwidth_um": 0.046,
+      "band": 27,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/38/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.696,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260422_1D1",
+      "mjd": 61152.5,
+      "date": "2026-04-22T12:00:00.000",
+      "detector": "D1",
+      "wavelength_um": 1.0344,
+      "bandwidth_um": 0.0265,
+      "band": 8,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/12/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.275,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260422_1D4",
+      "mjd": 61152.5,
+      "date": "2026-04-22T12:00:00.000",
+      "detector": "D4",
+      "wavelength_um": 3.2074,
+      "bandwidth_um": 0.0919,
+      "band": 59,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/39/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.806,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260423_1D2",
+      "mjd": 61153.5,
+      "date": "2026-04-23T12:00:00.000",
+      "detector": "D2",
+      "wavelength_um": 1.3584,
+      "bandwidth_um": 0.0328,
+      "band": 15,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/13/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.139,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260426_1D3",
+      "mjd": 61156.5,
+      "date": "2026-04-26T12:00:00.000",
+      "detector": "D3",
+      "wavelength_um": 1.7542,
+      "bandwidth_um": 0.0432,
+      "band": 25,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/14/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.715,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260430_1D4",
+      "mjd": 61160.5,
+      "date": "2026-04-30T12:00:00.000",
+      "detector": "D4",
+      "wavelength_um": 3.4786,
+      "bandwidth_um": 0.0997,
+      "band": 66,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/15/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.971,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260501_1D5",
+      "mjd": 61161.5,
+      "date": "2026-05-01T12:00:00.000",
+      "detector": "D5",
+      "wavelength_um": 4.0129,
+      "bandwidth_um": 0.036,
+      "band": 78,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/16/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.433,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260502_1D6",
+      "mjd": 61162.5,
+      "date": "2026-05-02T12:00:00.000",
+      "detector": "D6",
+      "wavelength_um": 4.6923,
+      "bandwidth_um": 0.0367,
+      "band": 94,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/17/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.271,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260503_1D1",
+      "mjd": 61163.5,
+      "date": "2026-05-03T12:00:00.000",
+      "detector": "D1",
+      "wavelength_um": 0.7937,
+      "bandwidth_um": 0.0203,
+      "band": 2,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/18/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.528,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260504_1D2",
+      "mjd": 61164.5,
+      "date": "2026-05-04T12:00:00.000",
+      "detector": "D2",
+      "wavelength_um": 1.2273,
+      "bandwidth_um": 0.0296,
+      "band": 12,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/19/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.703,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260505_1D3",
+      "mjd": 61165.5,
+      "date": "2026-05-05T12:00:00.000",
+      "detector": "D3",
+      "wavelength_um": 1.9818,
+      "bandwidth_um": 0.0488,
+      "band": 30,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/20/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.849,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260508_1D4",
+      "mjd": 61168.5,
+      "date": "2026-05-08T12:00:00.000",
+      "detector": "D4",
+      "wavelength_um": 3.4143,
+      "bandwidth_um": 0.0978,
+      "band": 64,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/21/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.381,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260509_1D5",
+      "mjd": 61169.5,
+      "date": "2026-05-09T12:00:00.000",
+      "detector": "D5",
+      "wavelength_um": 4.3262,
+      "bandwidth_um": 0.0388,
+      "band": 86,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/22/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.824,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260511_1D6",
+      "mjd": 61171.5,
+      "date": "2026-05-11T12:00:00.000",
+      "detector": "D6",
+      "wavelength_um": 4.6433,
+      "bandwidth_um": 0.0363,
+      "band": 93,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/23/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.359,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260512_1D1",
+      "mjd": 61172.5,
+      "date": "2026-05-12T12:00:00.000",
+      "detector": "D1",
+      "wavelength_um": 0.9988,
+      "bandwidth_um": 0.0255,
+      "band": 7,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/24/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.226,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260513_1D2",
+      "mjd": 61173.5,
+      "date": "2026-05-13T12:00:00.000",
+      "detector": "D2",
+      "wavelength_um": 1.2126,
+      "bandwidth_um": 0.0293,
+      "band": 12,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/25/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.107,
+      "quality": "ok"
+    },
+    {
+      "id": "l2b-v20-2025-251/level2_20260514_1D3",
+      "mjd": 61174.5,
+      "date": "2026-05-14T12:00:00.000",
+      "detector": "D3",
+      "wavelength_um": 2.2632,
+      "bandwidth_um": 0.0557,
+      "band": 37,
+      "release": "l2b-v20-2025-251",
+      "image_url": "/api/frame/26/png?stretch=asinh",
+      "target_xy": [
+        29.5,
+        29.5
+      ],
+      "flagged_fraction": 0.698,
+      "quality": "ok"
+    }
+  ]
+}

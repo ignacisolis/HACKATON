@@ -315,6 +315,72 @@ punta, para que nadie la "simplifique" más adelante.
   de astrometría, pero **no está en la Tabla 16**. No confirmado como bit por
   píxel; queda anotado en `otros_bitmasks`.
 
+### 4.5 El header del FITS es una segunda fuente, y no dice lo mismo
+
+Camilo avisó que los significados de los bits vienen en el FITS. **Es cierto**:
+el header de la extensión `FLAGS` trae tarjetas `MP_<NOMBRE> = <bit>`, y ahí
+está `MP_SOURCE = 21 / Pixel mapped to a known source`. Lo verifiqué contra un
+cutout real (release `l2b-v20-2025-251`).
+
+Pero las dos fuentes **no son equivalentes**, y la diferencia va en las dos
+direcciones:
+
+| | Tabla 16 del documento | Header FITS |
+|---|---|---|
+| Bits que define | 23 | 16 |
+| `PHANTOM` (4), `REFERENCE` (5) | **no los tiene** | sí |
+| `CROSSTALK` (20), los `GHOST`, `STREAK`, `BLOOM`, `SNOWBALL`, `HALO`, `SATELLITE_HALO` (22–29) | sí | **no los tiene** |
+| Las dos listas de enmascarado | **sí** | no |
+| Viaja con los datos | no | **sí** |
+
+Los 14 bits que aparecen en las dos coinciden en número y significado, lo que
+valida la transcripción. Y los 2 que solo trae el header, `PHANTOM` y
+`REFERENCE`, **estaban en mi lista de bits sin documentar**: ahora están en
+`flags.yaml` marcados con `origin: fits_header`.
+
+Así que ninguna fuente alcanza sola. Lo que sí cambia, y es una mejora real, es
+que el header **viaja con los datos**: si un release futuro mueve o agrega bits,
+el FITS lo dice y el PDF puede tardar meses. Para eso está
+`core.flags.cross_check_fits(header)`, que compara un header real contra
+`flags.yaml` y reporta desajustes, bits nuevos y bits que solo conoce el
+documento. Corrido contra el cutout real: **16 bits coinciden, cero desajustes,
+cero bits nuevos.** Es la pieza que faltaba para la consideración C1.
+
+Quedan **7 bits** sin definir en ninguna de las dos fuentes: 3, 8, 13, 16, 18,
+30 y 31.
+
+### 4.6 La trampa confirmada con datos reales
+
+El recorte de R Dra que bajé para verificar todo esto dio la demostración
+perfecta de por qué importa elegir bien la máscara. Es un recorte de 29×29 =
+841 píxeles, y **el 100 % tiene el flag `SOURCE`**: cae entero dentro de una
+máscara de fuentes, porque R Dra es una estrella brillante en un campo poblado.
+
+| Máscara | Píxeles usables | Resultado |
+|---|---|---|
+| `photometry` | 790 / 841 (93.9 %) | flujo medible |
+| `background` | **0 / 841** | nada |
+| "todo lo marcado" | **0 / 841** | fotometría imposible |
+
+O sea: no es que usar la máscara equivocada dé un número un poco peor. Da
+**cero píxeles**.
+
+De paso, un hallazgo para la tarea 23: en campos poblados **puede no haber fondo
+local limpio dentro del recorte**. Si el 100 % de los píxeles es `SOURCE`, no hay
+anillo de cielo que medir, y el fondo hay que estimarlo de una apertura más
+grande o del modelo `ZODI`.
+
+### 4.7 Las cuentas del header son de la imagen completa
+
+El header también trae tarjetas `L2 N_<NOMBRE>` con los píxeles marcados de cada
+flag, ya contados por el pipeline. Tentador, pero **son de la imagen de
+2040×2040, no del recorte**: en el cutout de 29×29 el header dice
+`L2 N_OUTLIER = 98707`, más que los 841 píxeles que tiene el recorte entero.
+
+Si el panel de metadata muestra esos números como si fueran del recorte, miente
+por varios órdenes de magnitud. Para el recorte hay que contar sobre el array,
+con `core.flags.bit_counts()`. Está anotado en `api.md` y en `flags.yaml`.
+
 ### 4.4 Para el frontend y el backend
 
 `core.flags.bit_counts(capa)` devuelve, ordenado de más a menos frecuente, cuántos

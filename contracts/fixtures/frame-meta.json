@@ -1,0 +1,77 @@
+{
+  "_fixture_note": "Header y cuentas de flags de un cutout REAL de R Dra.",
+  "id": "l2b-v20-2025-251/level2_2025W23_2B_0696_1D2",
+  "mjd": 60834.788416907,
+  "date": "2025-06-08T18:55:19.221",
+  "detector": "D2",
+  "release": "l2b-v20-2025-251",
+  "exposure_s": 113.5826,
+  "wavelength_um": 1.5143,
+  "bandwidth_um": 0.0366,
+  "wcs": {
+    "crval": [
+      247.081972417,
+      66.890441488
+    ],
+    "ctype": [
+      "RA---TAN-SIP",
+      "DEC--TAN-SIP"
+    ]
+  },
+  "flags": {
+    "extension_is_mask": true,
+    "cutout_counts": [
+      {
+        "bit": 21,
+        "name": "SOURCE",
+        "label": "Known source",
+        "pixels": 841,
+        "fraction": 1.0
+      },
+      {
+        "bit": 2,
+        "name": "SUR_ERROR",
+        "label": "SUR data handling error",
+        "pixels": 50,
+        "fraction": 0.059
+      },
+      {
+        "bit": 0,
+        "name": "TRANSIENT",
+        "label": "Transient (cosmic ray)",
+        "pixels": 48,
+        "fraction": 0.057
+      },
+      {
+        "bit": 1,
+        "name": "OVERFLOW",
+        "label": "Overflow (half-well reached)",
+        "pixels": 16,
+        "fraction": 0.019
+      },
+      {
+        "bit": 17,
+        "name": "PERSIST",
+        "label": "Persistence",
+        "pixels": 1,
+        "fraction": 0.001
+      }
+    ],
+    "full_frame_counts": {
+      "OUTLIER": 98707,
+      "TRANSIENT": 19834,
+      "SUR_ERROR": 12158,
+      "NONFUNC": 1789,
+      "OVERFLOW": 504,
+      "FULLSAMPLE": 240
+    },
+    "undocumented_bits_present": []
+  },
+  "mask_layers": [
+    "SOURCE",
+    "SUR_ERROR",
+    "TRANSIENT",
+    "OVERFLOW",
+    "PERSIST"
+  ]
+}

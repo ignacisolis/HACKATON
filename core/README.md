@@ -23,10 +23,11 @@ cuando hay que actualizar el catálogo.
 | `fetch_coverage.py` | Regenera `config/coverage.yaml` desde IRSA | listo |
 | `test_targets.py` | 10 pruebas, incluida la verificación de época | pasan |
 | `flags.py` | Decodifica la capa `FLAGS` y aplica las máscaras del documento | listo |
-| `test_flags.py` | 26 pruebas sobre los bits y las máscaras | pasan |
-| `align.py` | Alineación por WCS (tarea 21) | pendiente |
-| `subtract.py` | Resta de imágenes comparables (tarea 22) | pendiente |
-| `spectrum.py` | Extracción y combinación de espectros (tarea 23) | pendiente |
+| `test_flags.py` | 35 pruebas: bits, máscaras y cruce con el header FITS | pasan |
+| `types.py` | `Frame`, `AlignedCube`, `SpectrumPoint`: la frontera con `backend/` | listo |
+| `align.py` | Alineación por WCS (tarea 21) | firmas |
+| `subtract.py` | Resta de imágenes comparables (tarea 22) | firmas, valida ya |
+| `spectrum.py` | Extracción y combinación de espectros (tarea 23) | firmas |
 
 El notebook de exploración `fase0_spherex_explorar_fits.ipynb` sigue en la raíz
 del repo.
@@ -116,7 +117,7 @@ python core/fetch_targets.py --dry-run    # solo muestra qué quedaría
 
 ```bash
 python core/test_targets.py     # 10 pruebas de astrometría
-python core/test_flags.py       # 26 pruebas de FLAGS
+python core/test_flags.py       # 35 pruebas de FLAGS
 ```
 
 O con pytest, si está instalado: `pytest core/`.
