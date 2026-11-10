@@ -1,0 +1,120 @@
+# Pruebas automaticas del proyecto.
+#
+# Corre en cada push a las tres ramas de trabajo y en cada PR a main, para que
+# nadie mergee algo que rompe las funciones de ciencia.
+#
+# Las 45 pruebas de core/ corren SIN RED: fue verificado bloqueando el socket.
+# Eso es a proposito y conviene que siga asi. Los dos generadores
+# (core/fetch_targets.py y core/fetch_coverage.py) si necesitan red, contra
+# SIMBAD e IRSA, asi que NO se corren aca: son scripts de mantenimiento que se
+# corren a mano cuando hay que actualizar un catalogo. Si alguna prueba empieza
+# a necesitar red, el que la escriba tiene que repensarla, no abrir la red en CI.
+
+name: pruebas
+
+on:
+  push:
+    branches: [main, ciencias, front, back]
+  pull_request:
+    branches: [main]
+
+jobs:
+  core:
+    name: Funciones de ciencia (core/)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Traer el repo
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Instalar dependencias
+        # Las mismas que pide core/README.md. astroquery queda fuera a
+        # proposito: apunta a hosts de SIMBAD que ya no responden.
+        run: pip install numpy astropy pyyaml certifi
+
+      - name: Pruebas de astrometria
+        # Incluye la que verifica que las coordenadas de SIMBAD estan a epoca
+        # J2000. Si esta falla, todas las posiciones del proyecto quedan en duda.
+        run: python core/test_targets.py
+
+      - name: Pruebas de FLAGS
+        # Incluye la que fija que SOURCE no se enmascara para fotometria.
+        run: python core/test_flags.py
+
+      - name: Los YAML de config parsean y tienen lo que deben
+        run: |
+          python - <<'PY'
+          import yaml, sys
+
+          t = yaml.safe_load(open("config/targets.yaml", encoding="utf-8"))
+          assert t["schema_version"] == 1, "targets.yaml: schema_version inesperado"
+          assert len(t["targets"]) == 4, "targets.yaml: tienen que ser los 4 objetivos"
+          for k, v in t["targets"].items():
+              assert v["sources"]["coordinates"], k + ": sin bibcode de coordenadas"
+
+          f = yaml.safe_load(open("config/flags.yaml", encoding="utf-8"))
+          assert f["schema_version"] == 1, "flags.yaml: schema_version inesperado"
+          assert f["bits"][21]["name"] == "SOURCE", "flags.yaml: el bit 21 cambio"
+          assert "photometry" in f["mask_sets"] and "background" in f["mask_sets"]
+
+          c = yaml.safe_load(open("config/coverage.yaml", encoding="utf-8"))
+          assert len(c["coverage"]) == 4, "coverage.yaml: tienen que ser los 4 objetivos"
+
+          print("los tres YAML de config estan bien")
+          PY
+
+      - name: Los fixtures son JSON valido y respetan el contrato
+        run: |
+          python - <<'PY'
+          import glob, json
+
+          archivos = sorted(glob.glob("contracts/fixtures/*.json"))
+          assert archivos, "no hay fixtures: corre contracts/make_fixtures.py"
+          for ruta in archivos:
+              with open(ruta, encoding="utf-8") as fh:
+                  d = json.load(fh)
+              if "frames" in d:
+                  for fr in d["frames"]:
+                      # El ancho de banda es obligatorio: sin el, el panel de
+                      # espectros dibuja una forma falsa, porque la resolucion
+                      # va de R~35 en D4 a R~128 en D6.
+                      for campo in ("mjd", "detector", "wavelength_um",
+                                    "bandwidth_um", "band", "target_xy"):
+                          assert campo in fr, ruta + ": falta " + campo
+              if "points" in d:
+                  for p in d["points"]:
+                      for campo in ("wavelength_um", "bandwidth_um", "flux",
+                                    "flux_err", "unit", "n_epochs"):
+                          assert campo in p, ruta + ": falta " + campo
+              print("ok " + ruta)
+          PY
+
+      - name: core/ no abre la red
+        # La regla de la carpeta: funciones puras. Los unicos que pueden hablar
+        # con el mundo son los dos scripts de mantenimiento.
+        run: |
+          python - <<'PY'
+          import pathlib, re, sys
+
+          permitidos = {"fetch_targets.py", "fetch_coverage.py"}
+          patron = re.compile(r"\b(urllib\.request|socket|requests|httpx)\b")
+          malos = []
+          for p in sorted(pathlib.Path("core").glob("*.py")):
+              if p.name in permitidos:
+                  continue
+              texto = p.read_text(encoding="utf-8")
+              if patron.search(texto):
+                  malos.append(p.name)
+          if malos:
+              print("Estos archivos de core/ parecen abrir la red: " + ", ".join(malos))
+              print("core/ son funciones puras. Si hace falta red, va en un")
+              print("script de mantenimiento, no en la ruta de la web.")
+              sys.exit(1)
+          print("core/ limpio: ningun modulo abre la red")
+          PY
