@@ -42,7 +42,7 @@ del repo.
 ## Instalación
 
 ```bash
-pip install numpy astropy pyyaml certifi
+pip install -r requirements.txt
 ```
 
 Para graficar espectros más adelante hará falta `matplotlib`. `astroquery` no

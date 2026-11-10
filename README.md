@@ -363,7 +363,7 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 ## 12. Cómo ejecutar lo que ya existe
 
 ```bash
-pip install numpy astropy pyyaml certifi matplotlib
+pip install -r requirements.txt
 ```
 
 `astroquery` **no** hace falta y conviene no usarlo: su resolución de nombres

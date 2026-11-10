@@ -404,7 +404,7 @@ aviso conservador y que no implica descartar la medición.
 ## 5. Cómo reproducir todo esto
 
 ```bash
-pip install numpy astropy pyyaml certifi
+pip install -r requirements.txt
 python core/fetch_targets.py      # regenera config/targets.yaml desde SIMBAD
 python core/targets.py            # tabla resumen de los objetivos
 python core/flags.py              # tabla de bits de FLAGS y las dos máscaras
