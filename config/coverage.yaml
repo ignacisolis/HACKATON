@@ -1,0 +1,688 @@
+# config/coverage.yaml - GENERADO por core/fetch_coverage.py
+# Cobertura de SPHEREx sobre cada objetivo, en su posicion propagada.
+
+schema_version: 1
+generated_utc: '2026-11-10T22:07:04Z'
+generator: core/fetch_coverage.py
+irsa_endpoint: https://irsa.ipac.caltech.edu/TAP/sync
+query_epoch: '2025-11-09'
+coverage:
+  eps_ind_b:
+    label: Epsilon Indi B (Ba+Bb)
+    queried_at:
+      epoch: '2025-11-09'
+      ra_deg: 331.096376
+      dec_deg: -56.80055
+      note: posicion propagada por movimiento propio, no la de catalogo
+    observations: 445
+    artifact_rows: 445
+    producttypes:
+      science: 445
+    distinct_dates: 60
+    first_date: '2025-04-24'
+    last_date: '2026-10-02'
+    detectors_covering: 6
+    detectors:
+      SPHEREx-D1:
+        observations: 43
+        obs_per_channel_est: 2.5
+        distinct_dates: 18
+        first: '2025-04-25'
+        last: '2026-05-03'
+        wavelength_min_um: 0.7455
+        wavelength_max_um: 1.1167
+        energy_dimension: null
+        resolving_power: 39.1
+      SPHEREx-D2:
+        observations: 92
+        obs_per_channel_est: 5.4
+        distinct_dates: 25
+        first: '2025-04-24'
+        last: '2026-10-02'
+        wavelength_min_um: 1.1033
+        wavelength_max_um: 1.6499
+        energy_dimension: null
+        resolving_power: 41.4
+      SPHEREx-D3:
+        observations: 95
+        obs_per_channel_est: 5.6
+        distinct_dates: 24
+        first: '2025-04-29'
+        last: '2026-09-28'
+        wavelength_min_um: 1.6301
+        wavelength_max_um: 2.4346
+        energy_dimension: null
+        resolving_power: 40.6
+      SPHEREx-D4:
+        observations: 43
+        obs_per_channel_est: 2.5
+        distinct_dates: 18
+        first: '2025-04-25'
+        last: '2026-05-03'
+        wavelength_min_um: 2.4027
+        wavelength_max_um: 3.8473
+        energy_dimension: null
+        resolving_power: 34.9
+      SPHEREx-D5:
+        observations: 80
+        obs_per_channel_est: 4.7
+        distinct_dates: 23
+        first: '2025-04-24'
+        last: '2026-10-02'
+        wavelength_min_um: 3.8113
+        wavelength_max_um: 4.43
+        energy_dimension: null
+        resolving_power: 111.6
+      SPHEREx-D6:
+        observations: 92
+        obs_per_channel_est: 5.4
+        distinct_dates: 24
+        first: '2025-04-29'
+        last: '2026-09-28'
+        wavelength_min_um: 4.4115
+        wavelength_max_um: 5.0096
+        energy_dimension: null
+        resolving_power: 127.8
+    releases:
+    - '6.4'
+    - 6.5.6
+    - 7.0.5
+    quality_flags:
+      (vacio): 445
+    dates:
+    - '2025-04-24'
+    - '2025-04-25'
+    - '2025-04-26'
+    - '2025-04-27'
+    - '2025-04-29'
+    - '2025-04-30'
+    - '2025-05-01'
+    - '2025-05-04'
+    - '2025-05-06'
+    - '2025-05-07'
+    - '2025-05-20'
+    - '2025-06-06'
+    - '2025-06-07'
+    - '2025-06-10'
+    - '2025-09-28'
+    - '2025-09-29'
+    - '2025-09-30'
+    - '2025-10-01'
+    - '2025-10-02'
+    - '2025-10-03'
+    - '2025-10-05'
+    - '2025-10-06'
+    - '2025-10-07'
+    - '2025-10-08'
+    - '2025-10-09'
+    - '2025-10-10'
+    - '2025-10-11'
+    - '2025-10-13'
+    - '2025-10-16'
+    - '2025-10-20'
+    - '2025-10-23'
+    - '2025-11-01'
+    - '2025-11-03'
+    - '2025-11-04'
+    - '2025-11-06'
+    - '2025-11-07'
+    - '2025-11-08'
+    - '2025-11-11'
+    - '2025-11-12'
+    - '2026-04-18'
+    - '2026-04-20'
+    - '2026-04-21'
+    - '2026-04-24'
+    - '2026-04-25'
+    - '2026-04-27'
+    - '2026-04-29'
+    - '2026-04-30'
+    - '2026-05-01'
+    - '2026-05-03'
+    - '2026-05-04'
+    - '2026-09-22'
+    - '2026-09-23'
+    - '2026-09-25'
+    - '2026-09-26'
+    - '2026-09-27'
+    - '2026-09-28'
+    - '2026-09-29'
+    - '2026-09-30'
+    - '2026-10-01'
+    - '2026-10-02'
+  wise_0855:
+    label: WISE 0855-0714
+    queried_at:
+      epoch: '2025-11-09'
+      ra_deg: 133.760095
+      dec_deg: -7.242209
+      note: posicion propagada por movimiento propio, no la de catalogo
+    observations: 256
+    artifact_rows: 256
+    producttypes:
+      science: 256
+    distinct_dates: 27
+    first_date: '2025-05-05'
+    last_date: '2026-05-14'
+    detectors_covering: 6
+    detectors:
+      SPHEREx-D1:
+        observations: 36
+        obs_per_channel_est: 2.1
+        distinct_dates: 8
+        first: '2025-05-06'
+        last: '2026-05-05'
+        wavelength_min_um: 0.7455
+        wavelength_max_um: 1.1167
+        energy_dimension: null
+        resolving_power: 39.1
+      SPHEREx-D2:
+        observations: 48
+        obs_per_channel_est: 2.8
+        distinct_dates: 14
+        first: '2025-05-06'
+        last: '2026-05-14'
+        wavelength_min_um: 1.1033
+        wavelength_max_um: 1.6499
+        energy_dimension: null
+        resolving_power: 41.4
+      SPHEREx-D3:
+        observations: 45
+        obs_per_channel_est: 2.6
+        distinct_dates: 13
+        first: '2025-05-05'
+        last: '2026-05-11'
+        wavelength_min_um: 1.6301
+        wavelength_max_um: 2.4346
+        energy_dimension: null
+        resolving_power: 40.6
+      SPHEREx-D4:
+        observations: 36
+        obs_per_channel_est: 2.1
+        distinct_dates: 8
+        first: '2025-05-06'
+        last: '2026-05-05'
+        wavelength_min_um: 2.4027
+        wavelength_max_um: 3.8473
+        energy_dimension: null
+        resolving_power: 34.9
+      SPHEREx-D5:
+        observations: 48
+        obs_per_channel_est: 2.8
+        distinct_dates: 14
+        first: '2025-05-06'
+        last: '2026-05-14'
+        wavelength_min_um: 3.8113
+        wavelength_max_um: 4.43
+        energy_dimension: null
+        resolving_power: 111.6
+      SPHEREx-D6:
+        observations: 43
+        obs_per_channel_est: 2.5
+        distinct_dates: 13
+        first: '2025-05-05'
+        last: '2026-05-11'
+        wavelength_min_um: 4.4115
+        wavelength_max_um: 5.0096
+        energy_dimension: null
+        resolving_power: 127.8
+    releases:
+    - '6.4'
+    - 6.5.6
+    quality_flags:
+      (vacio): 256
+    dates:
+    - '2025-05-05'
+    - '2025-05-06'
+    - '2025-10-31'
+    - '2025-11-03'
+    - '2025-11-07'
+    - '2025-11-08'
+    - '2025-11-10'
+    - '2025-11-14'
+    - '2025-12-11'
+    - '2025-12-12'
+    - '2025-12-13'
+    - '2026-04-21'
+    - '2026-04-22'
+    - '2026-04-23'
+    - '2026-04-26'
+    - '2026-04-30'
+    - '2026-05-01'
+    - '2026-05-02'
+    - '2026-05-03'
+    - '2026-05-04'
+    - '2026-05-05'
+    - '2026-05-08'
+    - '2026-05-09'
+    - '2026-05-11'
+    - '2026-05-12'
+    - '2026-05-13'
+    - '2026-05-14'
+  rw_aur:
+    label: RW Aurigae A
+    queried_at:
+      epoch: '2025-11-09'
+      ra_deg: 76.95609
+      dec_deg: 30.40113
+      note: posicion propagada por movimiento propio, no la de catalogo
+    observations: 333
+    artifact_rows: 333
+    producttypes:
+      science: 333
+    distinct_dates: 35
+    first_date: '2025-09-01'
+    last_date: '2026-09-16'
+    detectors_covering: 6
+    detectors:
+      SPHEREx-D1:
+        observations: 56
+        obs_per_channel_est: 3.3
+        distinct_dates: 12
+        first: '2025-09-01'
+        last: '2026-09-09'
+        wavelength_min_um: 0.7455
+        wavelength_max_um: 1.1167
+        energy_dimension: null
+        resolving_power: 39.1
+      SPHEREx-D2:
+        observations: 55
+        obs_per_channel_est: 3.2
+        distinct_dates: 14
+        first: '2025-09-08'
+        last: '2026-09-15'
+        wavelength_min_um: 1.1033
+        wavelength_max_um: 1.6499
+        energy_dimension: null
+        resolving_power: 41.4
+      SPHEREx-D3:
+        observations: 56
+        obs_per_channel_est: 3.3
+        distinct_dates: 14
+        first: '2025-09-11'
+        last: '2026-09-16'
+        wavelength_min_um: 1.6301
+        wavelength_max_um: 2.4346
+        energy_dimension: null
+        resolving_power: 40.6
+      SPHEREx-D4:
+        observations: 56
+        obs_per_channel_est: 3.3
+        distinct_dates: 12
+        first: '2025-09-01'
+        last: '2026-09-09'
+        wavelength_min_um: 2.4027
+        wavelength_max_um: 3.8473
+        energy_dimension: null
+        resolving_power: 34.9
+      SPHEREx-D5:
+        observations: 56
+        obs_per_channel_est: 3.3
+        distinct_dates: 14
+        first: '2025-09-08'
+        last: '2026-09-15'
+        wavelength_min_um: 3.8113
+        wavelength_max_um: 4.43
+        energy_dimension: null
+        resolving_power: 111.6
+      SPHEREx-D6:
+        observations: 54
+        obs_per_channel_est: 3.2
+        distinct_dates: 13
+        first: '2025-09-11'
+        last: '2026-09-16'
+        wavelength_min_um: 4.4115
+        wavelength_max_um: 5.0096
+        energy_dimension: null
+        resolving_power: 127.8
+    releases:
+    - '6.4'
+    - 6.5.6
+    - 7.0.5
+    quality_flags:
+      (vacio): 333
+    dates:
+    - '2025-09-01'
+    - '2025-09-02'
+    - '2025-09-03'
+    - '2025-09-04'
+    - '2025-09-08'
+    - '2025-09-09'
+    - '2025-09-10'
+    - '2025-09-11'
+    - '2025-09-17'
+    - '2025-09-18'
+    - '2025-09-19'
+    - '2025-09-20'
+    - '2026-02-20'
+    - '2026-02-21'
+    - '2026-02-27'
+    - '2026-03-01'
+    - '2026-03-02'
+    - '2026-03-04'
+    - '2026-03-05'
+    - '2026-03-06'
+    - '2026-03-07'
+    - '2026-03-08'
+    - '2026-03-09'
+    - '2026-03-10'
+    - '2026-03-12'
+    - '2026-09-02'
+    - '2026-09-08'
+    - '2026-09-09'
+    - '2026-09-10'
+    - '2026-09-11'
+    - '2026-09-12'
+    - '2026-09-13'
+    - '2026-09-14'
+    - '2026-09-15'
+    - '2026-09-16'
+  r_dra:
+    label: R Draconis
+    queried_at:
+      epoch: '2025-11-09'
+      ra_deg: 248.167235
+      dec_deg: 66.755024
+      note: posicion propagada por movimiento propio, no la de catalogo
+    observations: 2483
+    artifact_rows: 2483
+    producttypes:
+      science: 2483
+    distinct_dates: 222
+    first_date: '2025-04-24'
+    last_date: '2026-09-27'
+    detectors_covering: 6
+    detectors:
+      SPHEREx-D1:
+        observations: 584
+        obs_per_channel_est: 34.4
+        distinct_dates: 113
+        first: '2025-06-06'
+        last: '2026-09-27'
+        wavelength_min_um: 0.7455
+        wavelength_max_um: 1.1167
+        energy_dimension: null
+        resolving_power: 39.1
+      SPHEREx-D2:
+        observations: 89
+        obs_per_channel_est: 5.2
+        distinct_dates: 22
+        first: '2025-06-08'
+        last: '2026-06-23'
+        wavelength_min_um: 1.1033
+        wavelength_max_um: 1.6499
+        energy_dimension: null
+        resolving_power: 41.4
+      SPHEREx-D3:
+        observations: 575
+        obs_per_channel_est: 33.8
+        distinct_dates: 88
+        first: '2025-04-24'
+        last: '2026-06-12'
+        wavelength_min_um: 1.6301
+        wavelength_max_um: 2.4346
+        energy_dimension: null
+        resolving_power: 40.6
+      SPHEREx-D4:
+        observations: 581
+        obs_per_channel_est: 34.2
+        distinct_dates: 112
+        first: '2025-06-06'
+        last: '2026-09-25'
+        wavelength_min_um: 2.4027
+        wavelength_max_um: 3.8473
+        energy_dimension: null
+        resolving_power: 34.9
+      SPHEREx-D5:
+        observations: 89
+        obs_per_channel_est: 5.2
+        distinct_dates: 22
+        first: '2025-06-08'
+        last: '2026-06-23'
+        wavelength_min_um: 3.8113
+        wavelength_max_um: 4.43
+        energy_dimension: null
+        resolving_power: 111.6
+      SPHEREx-D6:
+        observations: 565
+        obs_per_channel_est: 33.2
+        distinct_dates: 88
+        first: '2025-04-24'
+        last: '2026-06-12'
+        wavelength_min_um: 4.4115
+        wavelength_max_um: 5.0096
+        energy_dimension: null
+        resolving_power: 127.8
+    releases:
+    - '6.4'
+    - 6.5.3
+    - 6.5.4
+    - 6.5.5
+    - 6.5.6
+    - 6.5.7
+    - 7.0.5
+    quality_flags:
+      (vacio): 2483
+    dates:
+    - '2025-04-24'
+    - '2025-04-25'
+    - '2025-04-27'
+    - '2025-04-29'
+    - '2025-04-30'
+    - '2025-05-01'
+    - '2025-05-02'
+    - '2025-05-04'
+    - '2025-05-06'
+    - '2025-05-08'
+    - '2025-05-16'
+    - '2025-05-20'
+    - '2025-06-02'
+    - '2025-06-05'
+    - '2025-06-06'
+    - '2025-06-08'
+    - '2025-06-09'
+    - '2025-06-10'
+    - '2025-06-11'
+    - '2025-06-12'
+    - '2025-06-15'
+    - '2025-06-22'
+    - '2025-06-25'
+    - '2025-06-27'
+    - '2025-07-01'
+    - '2025-07-02'
+    - '2025-07-04'
+    - '2025-07-05'
+    - '2025-07-07'
+    - '2025-07-14'
+    - '2025-07-17'
+    - '2025-07-18'
+    - '2025-07-20'
+    - '2025-07-22'
+    - '2025-08-29'
+    - '2025-09-03'
+    - '2025-09-04'
+    - '2025-09-05'
+    - '2025-09-06'
+    - '2025-09-08'
+    - '2025-09-09'
+    - '2025-09-10'
+    - '2025-09-11'
+    - '2025-09-12'
+    - '2025-09-14'
+    - '2025-09-15'
+    - '2025-09-16'
+    - '2025-09-18'
+    - '2025-09-20'
+    - '2025-09-24'
+    - '2025-09-25'
+    - '2025-09-26'
+    - '2025-09-30'
+    - '2025-10-08'
+    - '2025-10-09'
+    - '2025-10-10'
+    - '2025-10-12'
+    - '2025-10-15'
+    - '2025-10-16'
+    - '2025-10-17'
+    - '2025-10-18'
+    - '2025-10-19'
+    - '2025-10-24'
+    - '2025-10-25'
+    - '2025-10-27'
+    - '2025-10-30'
+    - '2025-10-31'
+    - '2025-11-01'
+    - '2025-11-03'
+    - '2025-11-04'
+    - '2025-11-05'
+    - '2025-11-08'
+    - '2025-11-13'
+    - '2025-11-14'
+    - '2025-11-16'
+    - '2025-11-18'
+    - '2025-11-20'
+    - '2025-11-28'
+    - '2025-11-30'
+    - '2025-12-01'
+    - '2025-12-02'
+    - '2025-12-03'
+    - '2025-12-10'
+    - '2025-12-12'
+    - '2025-12-13'
+    - '2025-12-14'
+    - '2025-12-26'
+    - '2025-12-30'
+    - '2025-12-31'
+    - '2026-01-01'
+    - '2026-01-03'
+    - '2026-01-13'
+    - '2026-02-08'
+    - '2026-02-10'
+    - '2026-02-12'
+    - '2026-02-14'
+    - '2026-02-16'
+    - '2026-02-18'
+    - '2026-02-20'
+    - '2026-02-23'
+    - '2026-02-25'
+    - '2026-02-27'
+    - '2026-03-01'
+    - '2026-03-03'
+    - '2026-03-05'
+    - '2026-03-07'
+    - '2026-03-08'
+    - '2026-03-09'
+    - '2026-03-10'
+    - '2026-03-11'
+    - '2026-03-12'
+    - '2026-03-13'
+    - '2026-03-14'
+    - '2026-03-15'
+    - '2026-03-16'
+    - '2026-03-17'
+    - '2026-03-18'
+    - '2026-03-19'
+    - '2026-03-20'
+    - '2026-03-21'
+    - '2026-03-23'
+    - '2026-03-24'
+    - '2026-03-25'
+    - '2026-03-26'
+    - '2026-03-27'
+    - '2026-03-28'
+    - '2026-03-30'
+    - '2026-04-01'
+    - '2026-04-03'
+    - '2026-04-05'
+    - '2026-04-07'
+    - '2026-04-08'
+    - '2026-04-09'
+    - '2026-04-10'
+    - '2026-04-11'
+    - '2026-04-14'
+    - '2026-04-15'
+    - '2026-04-16'
+    - '2026-04-17'
+    - '2026-04-22'
+    - '2026-04-24'
+    - '2026-04-25'
+    - '2026-05-02'
+    - '2026-05-03'
+    - '2026-05-04'
+    - '2026-05-06'
+    - '2026-05-09'
+    - '2026-05-10'
+    - '2026-05-11'
+    - '2026-05-13'
+    - '2026-05-16'
+    - '2026-05-21'
+    - '2026-05-22'
+    - '2026-05-23'
+    - '2026-06-07'
+    - '2026-06-08'
+    - '2026-06-12'
+    - '2026-06-21'
+    - '2026-06-22'
+    - '2026-06-23'
+    - '2026-07-06'
+    - '2026-07-08'
+    - '2026-07-09'
+    - '2026-07-10'
+    - '2026-07-11'
+    - '2026-07-13'
+    - '2026-07-14'
+    - '2026-07-15'
+    - '2026-07-16'
+    - '2026-07-19'
+    - '2026-07-21'
+    - '2026-07-25'
+    - '2026-07-26'
+    - '2026-07-27'
+    - '2026-07-28'
+    - '2026-07-29'
+    - '2026-07-30'
+    - '2026-07-31'
+    - '2026-08-03'
+    - '2026-08-04'
+    - '2026-08-05'
+    - '2026-08-06'
+    - '2026-08-07'
+    - '2026-08-08'
+    - '2026-08-09'
+    - '2026-08-10'
+    - '2026-08-12'
+    - '2026-08-13'
+    - '2026-08-14'
+    - '2026-08-15'
+    - '2026-08-17'
+    - '2026-08-18'
+    - '2026-08-19'
+    - '2026-08-20'
+    - '2026-08-21'
+    - '2026-08-22'
+    - '2026-08-23'
+    - '2026-08-24'
+    - '2026-08-25'
+    - '2026-08-27'
+    - '2026-08-28'
+    - '2026-08-29'
+    - '2026-08-30'
+    - '2026-08-31'
+    - '2026-09-01'
+    - '2026-09-02'
+    - '2026-09-03'
+    - '2026-09-04'
+    - '2026-09-05'
+    - '2026-09-08'
+    - '2026-09-09'
+    - '2026-09-10'
+    - '2026-09-11'
+    - '2026-09-12'
+    - '2026-09-14'
+    - '2026-09-15'
+    - '2026-09-16'
+    - '2026-09-17'
+    - '2026-09-21'
+    - '2026-09-24'
+    - '2026-09-25'
+    - '2026-09-27'
