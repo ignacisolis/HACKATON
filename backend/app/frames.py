@@ -293,7 +293,7 @@ def lightcurve(q: Query, band: int, s: Settings | None = None) -> dict:
     det, lo, hi = s.band_range_um(band)
     frames = [f for f in ready_frames(q, s) if f.detector == f"D{det}"]
     points = science.extract_spectrum(frames, q.target, q.ra, q.dec)
-    mjds, flux, err = science.light_curve(points, band_um=(lo + hi) / 2, tolerance_um=(hi - lo) / 2)
+    mjds, flux, err = science.light_curve(points, band)
     return {"query": {**q.to_dict(), "band": band}, "band_range_um": [lo, hi],
             "mjds": [float(m) for m in mjds], "flux": [float(f) for f in flux],
             "flux_err": [float(e) for e in err]}

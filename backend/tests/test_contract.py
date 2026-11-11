@@ -66,13 +66,35 @@ def test_frame_meta_matches_fixture(cached_target):
     assert_shape(meta["wcs"], exp["wcs"], "meta.wcs")
 
 
-def test_spectrum_waits_for_core(cached_target):
-    """Mientras core.extract_spectrum no exista (tarea 23), 501 en JSON, no un 500."""
+def test_spectrum_y_lightcurve_ya_funcionan(cached_target):
+    """La tarea 23 esta implementada: los dos endpoints responden con el contrato.
+
+    Antes este test afirmaba lo contrario, que devolvian 501 mientras
+    core.extract_spectrum fuera un stub. Al mergear la rama ciencias dejo de ser
+    un stub, asi que el test fallaba porque la integracion habia funcionado.
+
+    No se comprueba que las listas vengan con datos: la cache de prueba tiene
+    pocos cuadros y de un solo detector, asi que lo normal es que salgan vacias.
+    Lo que se fija aca es la FORMA de la respuesta, que es lo que el frontend
+    consume.
+    """
     c, _ = cached_target
+
     r = c.get("/api/spectrum", params={"target": "wise_0855"})
-    assert r.status_code == 501 and r.json()["error"] == "not_implemented"
+    assert r.status_code == 200, r.text
+    body = r.json()
+    for campo in ("query", "aperture_px", "mask_purpose", "n_points", "points"):
+        assert campo in body, campo
+    assert body["mask_purpose"] == "photometry", (
+        "medir la fuente con la mascara de fondo enmascara SOURCE y borra el objetivo")
+    assert isinstance(body["points"], list)
+
     r = c.get("/api/lightcurve", params={"target": "wise_0855", "band": 30})
-    assert r.status_code == 501
+    assert r.status_code == 200, r.text
+    body = r.json()
+    for campo in ("query", "band_range_um", "mjds", "flux", "flux_err"):
+        assert campo in body, campo
+    assert len(body["mjds"]) == len(body["flux"]) == len(body["flux_err"])
 
 
 def test_spectrum_matches_fixture_with_core_stub(cached_target, monkeypatch):
