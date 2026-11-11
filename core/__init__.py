@@ -34,13 +34,14 @@ Listo:
     core.flags          decodificar la capa FLAGS y sus mascaras (tarea 8)
     core.align          alineacion por WCS con movimiento propio (tarea 21)
     core.subtract       resta, apilado y deteccion de dipolo (tarea 22)
-Firmas, sin implementar:
-    core.spectrum       tarea 23
+    core.spectrum       extraccion y combinacion de espectros (tarea 23)
+    core.bands          las 102 bandas, para el selector (C2, C3)
 """
-from core import align, datatypes, flags, spectrum, subtract, targets  # noqa: F401
+from core import align, bands, datatypes, flags, spectrum, subtract, targets  # noqa: F401
 from core.align import align_frames, centroid, shift_series, target_pixel  # noqa: F401
 from core.flags import bit_counts, decode, good_pixels, mask_for  # noqa: F401
-from core.spectrum import combine, light_curve  # noqa: F401
+from core.bands import band_info, band_of_wavelength, bands_of_detector  # noqa: F401
+from core.spectrum import combine, light_curve, snr_gain  # noqa: F401
 from core.spectrum import extract as extract_spectrum  # noqa: F401
 from core.subtract import coadd, comparable_pairs, dipole_snr  # noqa: F401
 from core.subtract import is_comparable, subtract_aligned  # noqa: F401
@@ -50,7 +51,7 @@ from core.datatypes import AlignedCube, Frame, SpectrumPoint  # noqa: F401
 
 __all__ = [
     # modulos
-    "align", "datatypes", "flags", "spectrum", "subtract", "targets",
+    "align", "bands", "datatypes", "flags", "spectrum", "subtract", "targets",
     # tarea 6
     "target_position", "target_skycoord", "needs_pm_correction",
     # tarea 8
@@ -61,7 +62,9 @@ __all__ = [
     "subtract_frames", "subtract_aligned", "is_comparable", "comparable_pairs",
     "coadd", "dipole_snr",
     # tarea 23
-    "extract_spectrum", "combine", "light_curve",
+    "extract_spectrum", "combine", "light_curve", "snr_gain",
+    # bandas (C2, C3)
+    "band_of_wavelength", "band_info", "bands_of_detector",
     # tipos de intercambio
     "Frame", "AlignedCube", "SpectrumPoint",
 ]

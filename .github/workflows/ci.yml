@@ -62,6 +62,13 @@ jobs:
         # WISE 0855 se ve en la resta, con su desplazamiento real de 1.35 px.
         run: python core/test_subtract.py
 
+      - name: Pruebas de bandas y espectros
+        run: python core/test_spectrum.py
+
+      - name: config/bands.yaml esta al dia
+        # Se genera de los rangos por detector; si cambian, regenerarlo.
+        run: python core/make_bands.py --check
+
       - name: Los YAML de config parsean y tienen lo que deben
         run: |
           python - <<'PY'

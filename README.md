@@ -336,7 +336,7 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 - [x] ~~Tabla de cobertura de los otros 3 objetivos~~ → hecho en la tarea 7: `config/coverage.yaml`. Los 4 objetivos tienen cobertura de los 6 detectores.
 - [x] ~~Significado de cada bit de `FLAGS`~~ → hecho en la tarea 8: `config/flags.yaml`, 23 bits del Explanatory Supplement. Quedan 9 bits sin documentar en la propia fuente.
 - [x] ~~Confirmar si algún rango de longitud de onda se solapa entre detectores~~ → **no se solapan**, se encadenan: 0.75–5.01 µm sin huecos, con costuras de ~0.02 µm. Ver `docs/ciencia.md` sección 3.4.
-- [ ] Probar la descarga y extracción de espectros con datos reales.
+- [x] ~~Probar la descarga y extracción de espectros con datos reales~~ → hecho con 18 recortes de WISE 0855. Funciona donde el objeto domina (D5–D6); en el azul lo que se mide es una fuente mezclada. Ver `docs/ciencia.md` 7.3.
 - [ ] Fecha límite del hackathon y lenguajes que maneja cada integrante (para fijar el stack, por ejemplo Python + FastAPI y JavaScript).
 - [ ] Definir el nombre del proyecto.
 - [ ] Volcar el reparto de roles a `docs/EQUIPO.md` (los roles ya están confirmados: ver sección 8).
@@ -353,8 +353,8 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 - [x] **`core/align.py`**: alineación por WCS con corrección de movimiento propio (tarea 21). 26 pruebas, incluido el criterio de aceptación y la contraprueba de que sin corregir no centra.
 - [x] Notebook de Fase 0 movido a `core/` (tarea 5).
 - [x] **`core/subtract.py`**: resta de cuadros comparables, apilado ponderado y detección de dipolo (tarea 22). 25 pruebas.
-- [ ] `core/spectrum.py` (tarea 23). Las firmas están.
-- [x] CI en GitHub Actions: 96 pruebas en cada push y PR.
+- [x] **`core/spectrum.py`** y **`core/bands.py`**: espectros, las 102 bandas y curvas de luz (tarea 23). 34 pruebas. Verificado con 18 recortes reales de WISE 0855: a 4.96 µm el flujo reproduce la fotometría W2 publicada con 1 % de diferencia.
+- [x] CI en GitHub Actions: 130 pruebas en cada push y PR.
 - [ ] Todo lo demás del roadmap (Fases 1 a 6).
 
 > **Corrección:** las versiones anteriores de este README daban por hecho un

@@ -3,8 +3,8 @@
 Lo que el resto del equipo necesita saber del lado científico, y de dónde sale
 cada número. Mantiene esta página el rol C (Nacho).
 
-Estado: **tareas 5, 6, 7, 8, 21 y 22 cerradas.** Toda la Fase 0 del rol C está
-lista, más la Fase 2 completa. Queda la 23 (espectros) y la 27 (validar).
+Estado: **tareas 5, 6, 7, 8, 21, 22 y 23 cerradas.** Queda solo la 27: validar
+los 4 casos y dejar un link por objeto.
 
 ---
 
@@ -560,7 +560,143 @@ IRSA documenta `WCS-WAVE` como una aproximación de ~1 nm. Para el visor alcanza
 para un número publicable hay que usar el producto **Spectral WCS** (`CWAVE` y
 `CBAND`), como recomienda IRSA. Importa para la tarea 23.
 
-## 7. Cómo reproducir todo esto
+## 7. Espectros (tarea 23)
+
+`core.extract_spectrum()` saca un punto por exposición, `core.combine()` los
+promedia por banda y `core.light_curve()` da flujo contra tiempo.
+`core.bands` tiene las 102 bandas.
+
+### 7.1 Las 102 bandas: espaciado logarítmico, no lineal
+
+[`config/bands.yaml`](../config/bands.yaml) define las 102 bandas (6 detectores
+por 17 canales), numeradas de 1 a 102 por longitud de onda creciente. Eso
+**responde la pregunta abierta** de `contracts/api.md` sobre cómo se numeran.
+
+El espaciado **no es lineal**: SPHEREx es un espectrómetro de poder resolvente
+constante, así que el ancho de banda crece con la longitud de onda. Se deduce de
+medir 6 exposiciones reales consecutivas de D2 sobre R Dra:
+
+| λ (µm) | ancho (µm) | λ/ancho |
+|---|---|---|
+| 1.4017 | 0.0336 | 41.7 |
+| 1.5806 | 0.0383 | 41.3 |
+
+λ/ancho es constante e igual al `energy_resolvingpower` que publica IRSA para D2
+(41.4). Y el cociente entre longitudes de onda consecutivas también es
+constante, 1.0244 = 1 + 1/41.4. Por eso el centro de cada banda es el centro
+**geométrico**, no el aritmético.
+
+Validación independiente: esas 6 exposiciones caen en las bandas **28, 29, 30,
+31, 32 y 33** — consecutivas, una por canal. Si la grilla estuviera mal
+espaciada, no pasaría. Queda fijado en
+[`core/test_spectrum.py`](../core/test_spectrum.py).
+
+### 7.2 Las bandas se solapan en las costuras, y son SEIS pares
+
+Una longitud de onda sola **no determina la banda**: los detectores se solapan un
+poco, así que en las costuras la misma λ cae en dos bandas, una por detector. Y
+eso es físicamente correcto, porque los dos detectores pueden medirla.
+
+| Bandas | Detectores | Solape (µm) |
+|---|---|---|
+| 17 ↔ 18 | D1/D2 | 1.1033–1.1167 |
+| 34 ↔ 35 | D2/D3 | 1.6301–1.6499 |
+| 51 ↔ 52 | D3/D4 | 2.4027–2.4346 |
+| 68 ↔ 69 | D4/D5 | 3.8113–3.8473 |
+| **68 ↔ 70** | **D4/D5** | 3.8452–3.8473 |
+| 85 ↔ 86 | D5/D6 | 4.4115–4.4300 |
+
+Hay 5 costuras pero **6 pares**. El par extra está en D4/D5, donde R salta de
+34.9 a 111.6: las bandas de D4 son unas 3 veces más anchas, y la última de D4
+alcanza a cubrir **dos** bandas de D5. Es consecuencia directa del salto de R
+(sección 3.5).
+
+Por eso `band_of_wavelength()` pide el detector, y `extract()` siempre lo pasa.
+**Para Bruno:** el selector de banda no debería ofrecer "1.11 µm" sin decir el
+detector, porque son dos bandas distintas.
+
+### 7.3 El espectro real de WISE 0855, contrastado con fotometría publicada
+
+Bajé **18 recortes reales** (3 por detector, ~90 MB) y saqué el espectro con
+`core/check_real_spectrum.py`. Salió un espectro de **17 bandas de las 102**, con
+SNR de 13.5 a 1.7, y todos los puntos marcados `ok`.
+
+Pero un espectro que corre no es un espectro correcto. Lo contrasté con la
+fotometría WISE publicada del objeto (W1 ≈ 17.8 mag a 3.4 µm y W2 ≈ 13.9 a
+4.6 µm, o sea 23 y 473 µJy):
+
+| λ (µm) | medido (µJy) | medido / esperado |
+|---|---|---|
+| 0.99–1.04 | 900–1090 | **38–47x** |
+| 1.51–1.59 | 750–830 | **32–35x** |
+| 2.21–2.41 | 410–440 | **18–19x** |
+| 3.35–3.54 | 87–275 | 3.7–12x |
+| 4.29–4.36 | 540–890 | 1.1–1.9x |
+| **4.85–5.00** | **467–668** | **0.99–1.41x** |
+
+**La conclusión es doble, y las dos mitades importan.**
+
+**Funciona donde el objeto domina.** A 4.96 µm el flujo medido reproduce la
+fotometría W2 conocida con un **1 % de diferencia**, y en todo D5–D6 queda dentro
+de un factor 1.9. Para fotometría de apertura sin ajuste de PSF, es buen acuerdo.
+La cadena completa — propagar movimiento propio, ubicar el objetivo con el WCS,
+enmascarar con los bits correctos, leer λ de `WCS-WAVE`, integrar apertura y
+convertir a Jy — da el número bien.
+
+**No sirve en el azul.** 38–47 veces el flujo posible para una enana Y es
+imposible: WISE 0855 es prácticamente invisible por debajo de 3 µm. Lo que se
+está midiendo ahí es **otra fuente mezclada dentro de la apertura**.
+
+### 7.4 El problema es la mezcla, y es el del enunciado
+
+Una apertura de 2.5 px son **15.5 arcsec de radio**. A esa escala, una posición
+cualquiera del cielo suele tener alguna fuente débil adentro. Y como WISE 0855 no
+aporta casi nada en el azul, lo que queda es el contaminante.
+
+Es exactamente el problema que nombra el enunciado: los objetos "a menudo se
+superponen". Haberlo visto con datos propios y poder cuantificarlo es más útil
+para el pitch que repetirlo del enunciado.
+
+Dos cosas que probé y **no** lo arreglan, para que nadie las reintente:
+
+- **Restar `ZODI` no cambia nada** (diferencias en el cuarto dígito). No porque el
+  modelo esté mal, sino porque el anillo de fondo ya quita lo que es suave: la luz
+  zodiacal es lisa en la escala del recorte. El exceso está **localizado** en la
+  posición del objetivo, y por eso el anillo no lo toca.
+- **Bajar el radio de apertura tampoco.** Con r = 1.0–1.5 px quedan 3 a 7 píxeles
+  y los resultados se dispersan sin sentido, con flujos incluso negativos: se
+  pierde PSF y el fondo pesa demasiado. r = 2.5 px es el único que da resultados
+  estables, y es el radio que usa el propio pipeline de Level 3.
+
+Lo que sí lo arreglaría es **ajustar una PSF** en vez de sumar apertura, que es
+justo lo que hace el pipeline de IRSA con Tractor. Para eso hay que traer la
+extensión `PSF`, la misma que la caché descarta por peso (~4.9 MB sin recortar).
+Queda anotado para la tarea 27.
+
+**Para el frontend:** el panel de espectro debería mostrar siempre la barra de
+error y el radio de apertura, y no presentar el espectro de un objeto débil como
+si fuera suyo sin más. Un aviso del tipo "apertura de 15.5 arcsec, puede incluir
+fuentes vecinas" es honesto y barato.
+
+### 7.5 La consideración C8, con un número
+
+De las 17 bandas cubiertas, **una** tuvo 2 épocas, y combinar dio la mejora
+esperada de **x1.41**, que es la raíz de 2. El resto tuvo una sola época, por lo
+mismo de la sección 6.2: con 3 recortes por detector, cada exposición cae en un
+canal distinto.
+
+Para ver la mejora de C8 en serio hay que bajar muchas más épocas por banda.
+R Dra es el caso donde se puede: ~34 por banda en D1, D3, D4 y D6, o sea x5.8.
+
+### 7.6 Un dato de operación para el backend
+
+IRSA devolvió **HTTP 503** tras 15 descargas de recortes seguidas. No es
+permanente, pero hay que esperar: `core/check_real_spectrum.py` reintenta con
+espera creciente (2, 4, 8, 16 s). **El backend va a chocar con lo mismo** al
+precalcular los 4 objetivos (tarea 26), así que conviene que tenga reintentos
+desde el principio y no descubra el 503 en la demo.
+
+## 8. Cómo reproducir todo esto
 
 ```bash
 pip install -r requirements.txt
@@ -572,4 +708,7 @@ python core/test_targets.py       # 10 pruebas, incluida la de la época
 python core/test_flags.py         # 35 pruebas de bits y máscaras
 python core/test_align.py         # 26 pruebas de alineación
 python core/test_subtract.py      # 25 pruebas de resta y apilado
+python core/test_spectrum.py      # 34 pruebas de bandas y espectros
+python core/bands.py              # la tabla de las 102 bandas
+python core/check_real_spectrum.py  # espectro real (usa red, ~90 MB)
 ```

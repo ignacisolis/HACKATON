@@ -88,10 +88,20 @@ class SpectrumPoint:
 
     wavelength_um: float
     bandwidth_um: float
-    flux: float                # MJy/sr, o Jy si se integra apertura
+    flux: float                # flujo integrado en la apertura
     flux_err: float
     mjd: float
     detector: str
     n_pixels: int              # pixeles que entraron en la apertura
     flagged_fraction: float    # cuantos de la apertura estaban enmascarados
     quality: str = "ok"        # 'ok' | 'suspect' | 'bad'
+    unit: str = "Jy"           # unidad de flux y flux_err
+    # Numero de banda de 1 a 102, de core.bands. None si cae fuera de la grilla.
+    band: int = None
+    # Fondo restado, en MJy/sr. None cuando el anillo no tenia pixeles limpios
+    # suficientes: en ese caso NO se resto nada y quality queda 'suspect', en
+    # vez de inventar un cero.
+    background: float = None
+    surface_brightness: float = None   # media en la apertura, MJy/sr
+    # Cuantas epocas se combinaron. 1 en un punto crudo; mas en uno de combine().
+    n_epochs: int = 1
