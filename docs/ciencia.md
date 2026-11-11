@@ -3,8 +3,9 @@
 Lo que el resto del equipo necesita saber del lado científico, y de dónde sale
 cada número. Mantiene esta página el rol C (Nacho).
 
-Estado: **tareas 5, 6, 7, 8, 21, 22 y 23 cerradas.** Queda solo la 27: validar
-los 4 casos y dejar un link por objeto.
+Estado: **tareas 5, 6, 7, 8, 21, 22 y 23 cerradas.** De la 27 está hecha la
+mitad científica (sección 8); los links permanentes esperan a que la web esté
+desplegada.
 
 ---
 
@@ -156,6 +157,12 @@ tiempo) y para el panel de espectros, es el objetivo que mejor va a lucir.
 > **Recomendación para el equipo:** armar la demo principal con **R Draconis**, no
 > con WISE 0855. WISE 0855 es el caso difícil y hay que resolverlo, pero no es el
 > que mejor muestra la herramienta.
+
+> ⚠️ **CORREGIDO en la sección 8.2.** Esta recomendación se hizo mirando solo la
+> cobertura, que son metadatos. Al abrir los archivos resultó que **R Dra está
+> saturado**: `BLOOM` y `HALO` dejan 0 píxeles usables en la apertura, así que no
+> se le puede medir fotometría ni espectro. Sigue siendo el mejor caso para el
+> **video**, pero la demo de variabilidad y espectros va con **RW Aurigae**.
 
 Una rareza que conviene revisar: en R Dra los detectores no están parejos. D1,
 D3, D4 y D6 tienen 565–584 observaciones, pero **D2 y D5 solo 89**. En los otros
@@ -696,7 +703,120 @@ espera creciente (2, 4, 8, 16 s). **El backend va a chocar con lo mismo** al
 precalcular los 4 objetivos (tarea 26), así que conviene que tenga reintentos
 desde el principio y no descubra el 503 en la demo.
 
-## 8. Cómo reproducir todo esto
+## 8. Validación de los 4 objetivos (tarea 27, mitad científica)
+
+La tarea 27 pide dos cosas: validar los 4 casos y dejar un link permanente por
+objeto. Los links dependen de que la web esté desplegada (tareas 13 y 16, sin
+empezar). Esto es la otra mitad: comprobar con recortes **reales** que lo que el
+enunciado pide de cada objetivo se puede demostrar con `core/`.
+
+Se corre con `python core/validate_targets.py`. Usa red y baja ~250 MB.
+
+### 8.1 El veredicto
+
+| Objetivo | Espectro | Serie temporal | Movimiento | Veredicto |
+|---|---|---|---|---|
+| **RW Aurigae A** | 6/6 detectores, 1.07–4.94 µm, SNR 371 | 8 épocas, 372 días, **varía 7.6×**, χ² = 69168 | despreciable | **el mejor caso** |
+| **WISE 0855** | 6/6 detectores, 0.99–4.96 µm, SNR 6.6 | compatible con constante (χ² = 1.6) ✓ correcto | 1.34 px, par del mismo canal encontrado, **sin detección** | parcial |
+| **Epsilon Indi B** | 6/6 detectores, 0.75–4.42 µm, SNR 94 | "varía 4×" — es **color**, no variabilidad | 1.09 px, sin par comparable | parcial |
+| **R Draconis** | 4/6 detectores | **falla: 0 píxeles usables** | despreciable | **saturado** |
+
+### 8.2 Me equivoqué con R Draconis: está saturado
+
+En la sección 3.1 recomendé R Dra como el mejor caso para la demo, por su
+cobertura: 2483 observaciones en 222 fechas, diez veces más que cualquier otro.
+**Esa recomendación estaba mal**, y la corrijo acá.
+
+Recomendé por cobertura sin comprobar si la fotometría sirve. No sirve. En 6 de
+los 8 recortes de la serie quedan **0 de ~20 píxeles usables** en la apertura, y
+los flags que dominan lo explican:
+
+```
+SOURCE, TRANSIENT, SUR_ERROR, BLOOM, HALO
+```
+
+`BLOOM` y `HALO` son derrame de carga y halo de una fuente brillante, y
+`TRANSIENT` también se dispara por el derrame de una vecina saturada (lo dice la
+nota del bit 0 en `config/flags.yaml`). O sea: **R Dra es demasiado brillante
+para SPHEREx.** Es una Mira con K ≈ 0 mag, y SPHEREx está diseñado para fuentes
+débiles. Satura y embadurna su entorno.
+
+Consecuencia práctica: R Dra sigue siendo **excelente para el video** — 222
+fechas de imágenes donde se ve el objeto cambiar — pero **no se le puede medir
+fotometría ni espectro** con apertura. Para el panel de espectros no es el caso
+a mostrar.
+
+Es un buen ejemplo de por qué la tarea 27 existe: la cobertura se mide con
+metadatos, pero que el dato sirva solo se sabe abriendo los archivos.
+
+### 8.3 RW Aurigae es el mejor caso para la demo
+
+Es el que cumple su parte del enunciado sin peros:
+
+- **6 de 6 detectores**, de 1.07 a 4.94 µm, con SNR mediana de **371**.
+- **8 épocas en 372 días**, con el flujo variando un factor **7.6**.
+- χ² contra brillo constante de **69168**. Aun descontando que parte de la
+  dispersión es color (cada época cae en otro canal), esa cifra no es ruido.
+- Movimiento propio despreciable, así que no hay que explicar nada raro.
+
+Es una T Tauri con variabilidad irregular grande y bien documentada, así que lo
+medido es consistente con lo que se sabe del objeto.
+
+> **Recomendación revisada para el equipo:** la demo de **variabilidad y
+> espectros** va con **RW Aurigae**. La de **video con muchas épocas** va con
+> **R Draconis**. WISE 0855 es el caso difícil que hay que resolver, no el que
+> mejor luce.
+
+### 8.4 El movimiento de WISE 0855: el par existe, la señal no
+
+Encontré un par **realmente comparable**: banda 33, **2025-05-06 y 2026-05-14**,
+373 días de separación y Δλ = **0.0002 µm**. La maquinaria funciona: encuentra el
+par, alinea al cielo y resta.
+
+Pero el dipolo **no se detecta**. Los lóbulos dan 3.8 y 1.2 sigma en una caja de
+4 px, y en el mapa de SNR alrededor del objetivo no hay estructura de dipolo.
+
+La razón no es el método, es el objeto: a 1.59 µm **WISE 0855 no está detectado**.
+Es lo mismo de la sección 7.3 — por debajo de 3 µm lo que se mide es una fuente
+mezclada, no la enana. Si el objeto no aparece, no hay nada que se mueva.
+
+**Lo que hay que hacer para la demo de O4:** buscar un par del mismo canal, a un
+año de distancia, en **D5 o D6** (4.3–5.0 µm), que es donde el objeto domina y
+reproduce su fotometría W2. Ahí sí debería haber señal que se desplace.
+
+### 8.5 Un problema operativo: el canal no está en los metadatos
+
+Para restar hacen falta dos épocas del mismo canal. Y hay un obstáculo que no
+esperaba: **el canal no se puede saber desde el TAP de IRSA.**
+`energy_bandpassname` da el detector, y `energy_bounds_lower/upper` dan el rango
+del detector entero, no el del canal. La λ en la posición del objetivo sale de
+`WCS-WAVE`, o sea **hay que abrir el FITS**.
+
+Medido: de 10 exposiciones de D2 sobre WISE 0855 elegidas en fechas repartidas,
+solo **4 de 45 pares** resultaron comparables, y de esos uno solo estaba a más de
+un día de distancia.
+
+**Para Camilo:** la caché compacta tiene que guardar la **λ en el objetivo** de
+cada exposición, no solo el detector. Si no, encontrar un par restable obliga a
+volver a bajar los recortes cada vez. Es un argumento más de que la caché no es
+una optimización opcional.
+
+### 8.6 Los objetos brillantes no tienen fondo estimable
+
+En eps Ind B, RW Aur y R Dra, **todos** los puntos salieron marcados `suspect`,
+siempre por lo mismo: el anillo de fondo no tiene píxeles limpios, porque el
+recorte entero está dentro de una máscara `SOURCE`. Es lo mismo que pasó con
+R Dra en la sección 4.6.
+
+`extract()` no inventa un cero: deja `background = None` y marca el punto. Está
+bien que avise, pero significa que **los flujos de los objetos brillantes
+incluyen cielo** y salen varias veces por encima de lo real. Para eps Ind B
+medimos 11–44 mJy donde se esperan ~2.
+
+Para arreglarlo hay que estimar el fondo de un recorte más grande que la máscara
+de fuentes, o usar el modelo `ZODI` más un término local. Queda anotado.
+
+## 9. Cómo reproducir todo esto
 
 ```bash
 pip install -r requirements.txt
@@ -711,4 +831,5 @@ python core/test_subtract.py      # 25 pruebas de resta y apilado
 python core/test_spectrum.py      # 34 pruebas de bandas y espectros
 python core/bands.py              # la tabla de las 102 bandas
 python core/check_real_spectrum.py  # espectro real (usa red, ~90 MB)
+python core/validate_targets.py     # valida los 4 objetivos (usa red, ~250 MB)
 ```

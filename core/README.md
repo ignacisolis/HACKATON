@@ -33,6 +33,7 @@ cuando hay que actualizar el catálogo.
 | `bands.py` | Las 102 bandas, para el selector (C2, C3) | listo |
 | `make_bands.py` | Genera `config/bands.yaml` | listo |
 | `check_real_spectrum.py` | Verifica el espectro con datos reales (usa red) | listo |
+| `validate_targets.py` | Valida los 4 objetivos con datos reales (usa red) | listo |
 | `test_spectrum.py` | 34 pruebas de bandas y espectros | pasan |
 
 El notebook de exploración de la Fase 0 está en

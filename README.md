@@ -45,7 +45,7 @@ El usuario ingresa las **coordenadas** (ascensión recta y declinación) de una 
 | **Epsilon Indi B** | Un par de enanas cafés que orbitan una estrella | Se ve la zona del sistema (ver nota sobre resolución en la sección 7) |
 | **WISE 0855** (08h55m10.831s, −07°14′42.53″) | Objeto muy frío y débil, con movimiento propio muy alto | Su desplazamiento en el tiempo |
 | **RW Aurigae** | Estrella variable | Cambio de brillo en el tiempo |
-| **R Draconis** | Estrella variable evolucionada | Cambio de brillo y espectro |
+| **R Draconis** | Estrella variable evolucionada | Cambio de brillo. **Saturado:** no admite fotometría, ver `docs/ciencia.md` 8.2 |
 
 ### 4.3 Consideraciones especiales (del enunciado)
 
