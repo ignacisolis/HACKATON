@@ -6,7 +6,7 @@ Rol A (Camilo). Python + FastAPI. Plan y estado: [`PLAN.md`](PLAN.md).
 
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r backend/requirements.txt
+.venv/bin/pip install -r requirements.txt -r backend/requirements.txt
 .venv/bin/uvicorn app.main:app --app-dir backend --port 8000
 ```
 
@@ -26,60 +26,48 @@ cd backend && ../.venv/bin/python -m pytest -q
 | `app/irsa.py` | **Único** módulo que habla con IRSA: consulta TAP y descarga de cutouts. |
 | `app/cache.py` | Caché compacta en disco (sin PSF, ~55–110 KB por exposición). |
 | `app/frames.py` | Lista de cuadros + descarga progresiva en segundo plano (máx. 8 hilos). |
-| `app/render.py` | Remuestreo north-up y PNG. **Provisional** hasta `core.align()`. |
+| `app/render.py` | Remuestreo a grilla de cielo norte arriba y PNG (`asinh`/`linear`). |
+| `app/science.py` | Puente con `core/` (Nacho): objetivos, FLAGS, espectros. |
 | `app/main.py` | Endpoints HTTP. |
 | `app/precompute.py` | `python -m app.precompute`: deja en caché los objetivos de la demo (#26). |
 | `app/release_update.py` | `python -m app.release_update [--apply]`: suma releases nuevos de IRSA (#28). |
 
-## Endpoints (borrador hasta acordar `contracts/api.md`)
+## Endpoints (siguen `contracts/api.md` v0)
 
-`ra`/`dec` aceptan grados (`133.79513`, `-7.24515`) o sexagesimal (`08h55m10.831s`, `-7d14m42.53s`).
-`size` es el lado del recorte en grados (por defecto 0.1, máximo 0.3).
+Parámetros comunes: `target` (`eps_ind_b`, `wise_0855`, `rw_aur`, `r_dra`) **o** `ra`+`dec`
+(grados, o sexagesimal `08h55m10.831s` / `-7d14m42.53s`), y `size` en grados (0.1 por defecto, máx. 0.3).
+Con `target` el recorte se centra donde está el objeto en 2026 (movimiento propio de `core.targets`).
+Los errores son siempre JSON: `{"error": "...", "detail": "..."}` (422 parámetro, 404 cuadro, 501 core
+pendiente, 502 IRSA).
 
-### `GET /api/frames?ra=&dec=&size=&band=&detector=`
+| Endpoint | Qué devuelve |
+|---|---|
+| `GET /api/frames?target=\|ra&dec&size&band&detector&limit&offset` | Cuadros por fecha: `id, mjd, date, detector ("D2"), wavelength_um, bandwidth_um, band, release, image_url, target_xy, flagged_fraction, quality` + `ready, meta_url, collection`. Arriba: `n_frames, n_dates, pending, complete`. |
+| `GET /api/frame/{id}/png?…&stretch=asinh\|linear&layer=image\|image-zodi\|variance\|flags&bits=SOURCE,21` | PNG norte arriba en una grilla de cielo fija. |
+| `GET /api/frame/{id}/meta?…` | Header + `flags.cutout_counts` (del recorte), `full_frame_counts` (de la exposición entera), `undocumented_bits_present`, `at_target`, `mask_layers`, `quality`, `target`. |
+| `GET /api/coverage?…` | Por detector, colección, fecha, época y banda, sin bajar cutouts. |
+| `GET /api/targets` | Los 4 objetivos, su centro y cuánto hay en caché. |
+| `GET /api/spectrum?…` | Llama a `core.extract_spectrum` + `core.combine`. **501** hasta que exista la tarea 23. |
+| `GET /api/lightcurve?…&band=` | Llama a `core.light_curve`. **501** hasta la tarea 23. |
 
-Devuelve al instante la lista de cuadros ordenada por fecha y encola la descarga de los que faltan.
-El frontend vuelve a pedir la lista hasta que llega `complete: true` (los cuadros ya listos traen `ready: true`).
+Carga progresiva: `/api/frames` responde al instante y encola lo que falta; el frontend vuelve a
+pedir hasta `complete: true`. Los cuadros sin bajar traen `ready: false` y `null` en λ, banda, etc.
 
-```json
-{
-  "query": {"ra": 133.79513, "dec": -7.24515, "size": 0.1, "band": null, "detector": 5},
-  "release": {"collections": ["spherex_qr2", "…"], "label": "…"},
-  "count": 48, "pending": 0, "queued": 0, "complete": true,
-  "frames": [
-    {"id": "2025W19_1B_0231_4D5", "date": "2025-05-06T…Z", "mjd": 60801.3, "detector": 5,
-     "wavelength_um": 4.1393, "band": 78, "version": "l2b-v20-2025-241",
-     "collection": "spherex_qr2", "ready": true,
-     "image_url": "/api/frame/2025W19_1B_0231_4D5/image.png?ra=…&dec=…&size=0.1",
-     "meta_url": "/api/frame/2025W19_1B_0231_4D5/meta?ra=…&dec=…&size=0.1"}
-  ]
-}
-```
+### Coordenadas de `target_xy`
 
-- `band` (1–102) es **aproximada**: 17 canales log-espaciados por detector (ver `config/release.yaml`).
-  Con `band` se filtra por detector y, cuando el λ ya se conoce, por banda.
-- `wavelength_um` es el λ del píxel del objetivo en esa exposición (`WCS-WAVE`).
+Píxeles del PNG devuelto, base 0, **x a la derecha e y hacia abajo** (como un `<canvas>`).
+El PNG es una grilla de cielo fija (norte arriba, este a la izquierda) centrada en `query.ra/dec`:
+las estrellas quedan quietas y el objetivo se mueve, que es lo que muestra el movimiento (O4).
+Por eso `target_xy` cambia de cuadro a cuadro y el frontend debe dibujar la cruz ahí.
 
-### `GET /api/coverage?ra=&dec=&size=`
+### Relación con `core/`
 
-Qué hay en ese punto sin bajar ningún cutout: total, observaciones por detector y por colección,
-fechas, **épocas** (visitas de ~6 meses) y, para lo ya cacheado, cuántas exposiciones caen en cada banda
-(`bands`, con `bands_known` = cuántas tienen λ conocido). Sirve para el selector de banda.
-
-### `GET /api/targets`
-
-Objetivos de la demo con las coordenadas **exactas** que están precalculadas (`view_query`, `frames_url`).
-El frontend debe usar esas coordenadas para que carguen al instante desde la caché.
-
-### `GET /api/frame/{id}/image.png?ra=&dec=&size=&layer=&bits=&vmin=&vmax=`
-
-PNG en escala de grises, norte arriba y este a la izquierda, centrado en `ra`/`dec`.
-`layer`: `image` (por defecto), `image-zodi`, `variance` o `flags` (RGBA transparente con los bits de `bits=21,19`).
-
-### `GET /api/frame/{id}/meta?ra=&dec=&size=`
-
-Metadata del header (fecha, exposición, λ, banda, FWHM de la PSF, calidad L1/L2) y, por cada bit de FLAGS,
-su nombre (tomado de `MP_*` del propio FITS), la fracción de píxeles marcados y si está prendido en el objetivo.
+| Backend | core/ (Nacho) |
+|---|---|
+| `app/science.py` | Único puente: `core.targets`, `core.flags`, `core.extract_spectrum`, `core.datatypes.Frame`. |
+| Posición del objetivo por fecha | `core.targets.target_position`, interpolada entre los bordes de la ventana (error < 0.001″, hay test). |
+| `flagged_fraction`, `cutout_counts`, `mask_layers` | `core.flags.mask_for(…, "photometry")`, `bit_counts`, `pipeline_counts`. |
+| Video | Grilla de cielo norte arriba (`render.py`). `core.align_frames` traslada pero no rota, y cada visita de SPHEREx viene con otro ángulo; queda para restas y fotometría. |
 
 ## Releases (C1)
 
@@ -96,11 +84,11 @@ cd backend
 ## Precálculo de la demo (#26)
 
 ```bash
-cd backend && ../.venv/bin/python -m app.precompute   # lee config/targets.yaml (formato en app/precompute.py)
+cd backend && ../.venv/bin/python -m app.precompute [--only wise_0855] [--list]
 ```
 
-Sin `config/targets.yaml` usa WISE 0855 con las coordenadas del enunciado. Si el objetivo trae
-`epoch` y movimiento propio, el recorte se centra en su posición de 2026 (no en la del catálogo).
+Usa `config/targets.yaml` (rol C, desde SIMBAD) a través de `core.targets`: cada recorte se centra
+donde está el objetivo a mitad de la ventana de SPHEREx (2026-01-12).
 
 ## CI
 

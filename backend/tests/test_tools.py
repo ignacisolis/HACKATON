@@ -35,7 +35,7 @@ def test_coverage(client, settings):
     c, calls = client
     body = c.get("/api/coverage", params={"ra": RA, "dec": DEC}).json()
     assert body["total"] == 2
-    assert body["detectors"] == {"1": 1, "3": 1}
+    assert body["detectors"] == {"D1": 1, "D3": 1}
     assert body["bands_known"] == 0 and body["bands"] == {}
     assert len(body["epochs"]) == 1 and body["epochs"][0]["count"] == 2
     assert calls["cutout"] == 0  # la cobertura nunca baja cutouts
@@ -47,23 +47,39 @@ def test_coverage(client, settings):
     assert body["bands"] == {str(settings.band_of(3, 2.0)): 1}
 
 
-def test_center_with_proper_motion(settings):
-    t = {"name": "X", "slug": "x", "ra": 10.0, "dec": 0.0, "epoch": 2016.0,
-         "pmra_masyr": 1000, "pmdec_masyr": -1000}  # 1″/año en cada eje
-    ra, dec, size = precompute.center_of(t, 2026.0, settings)
-    assert ra == pytest.approx(10.0 + 10 / 3600, abs=1e-5)
-    assert dec == pytest.approx(-10 / 3600, abs=1e-5)
-    assert size == settings.default_size_deg
-    # sin época no se mueve
-    assert precompute.center_of({**t, "epoch": None}, 2026.0, settings)[:2] == (10.0, 0.0)
+def test_target_position_matches_core():
+    """La interpolación del backend reproduce core.targets.target_position (< 0.001″)."""
+    from app import science
+    from core import targets as tg
+    a, b = science.window_mjd()
+    for key in science.target_keys():
+        for m in (a, (a + b) / 2, b, a + 123.4):
+            ra1, dec1 = science.target_radec(key, m)
+            ra2, dec2 = tg.target_position(key, m)
+            assert tg.separation_arcsec(ra1, dec1, ra2, dec2) < 1e-3, key
 
 
-def test_precompute_and_targets(client, monkeypatch, tmp_path):
+def test_target_query_uses_core_position(client):
+    """?target=wise_0855 centra el recorte donde está el objeto en 2026, no en el enunciado."""
+    from app import science
+    c, _ = client
+    body = c.get("/api/frames", params={"target": "wise_0855", "prefetch": False}).json()
+    q = body["query"]
+    ra, dec, epoch = science.window_center("wise_0855")
+    assert (q["ra"], q["dec"], q["target"]) == (ra, dec, "wise_0855")
+    assert q["resolved_from"] == "targets.yaml + movimiento propio" and q["coord_epoch_applied"] == epoch
+    # el enunciado da 08h55m10.831s -7d14m42.53s: ~2′ (≈ 21 px) de distancia
+    assert abs(ra - 133.79513) * 3600 > 100
+    assert "target=wise_0855" in body["frames"][0]["image_url"]
+
+
+def test_precompute_and_targets(client, monkeypatch):
+    from app import science
     c, calls = client
-    monkeypatch.setattr(precompute, "TARGETS_FILE", tmp_path / "no-existe.yaml")
+    monkeypatch.setattr(science, "target_keys", lambda: ["wise_0855"])
     assert precompute.main([]) == 0
     targets = c.get("/api/targets").json()["targets"]
-    assert targets[0]["slug"] == "wise0855" and targets[0]["cached"] == targets[0]["frames"] == 2
+    assert targets[0]["key"] == "wise_0855" and targets[0]["cached"] == targets[0]["frames"] == 2
     # la demo ya no toca IRSA
     before = dict(calls)
     body = c.get(targets[0]["frames_url"] + "&prefetch=false").json()

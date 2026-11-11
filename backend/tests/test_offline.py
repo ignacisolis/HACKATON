@@ -52,36 +52,62 @@ def test_frames_then_cache(client):
     r = c.get("/api/frames", params={"ra": RA, "dec": DEC, "prefetch": False})
     assert r.status_code == 200
     body = r.json()
-    assert body["count"] == 2 and body["pending"] == 2 and not body["complete"]
+    assert body["n_frames"] == 2 and body["pending"] == 2 and not body["complete"]
     f = body["frames"][1]
-    assert f["detector"] == 3 and f["ready"] is False
+    assert f["detector"] == "D3" and f["ready"] is False and f["wavelength_um"] is None
 
     png = c.get(f["image_url"])
     assert png.status_code == 200 and png.content[:4] == b"\x89PNG"
     meta = c.get(f["meta_url"]).json()
     assert meta["wavelength_um"] == pytest.approx(2.0)
-    src = next(x for x in meta["flags"] if x["name"] == "SOURCE")
-    assert src["bit"] == 21 and src["at_target"] is True
+    assert meta["bandwidth_um"] == pytest.approx(0.05)
+    src = next(x for x in meta["flags"]["cutout_counts"] if x["name"] == "SOURCE")
+    assert src["bit"] == 21 and src["pixels"] == 1
+    assert "SOURCE" in meta["flags"]["at_target"] and "SOURCE" in meta["mask_layers"]
 
     # 2ª consulta: misma posición en sexagesimal -> ni TAP ni cutout tocan IRSA
     r2 = c.get("/api/frames", params={"ra": "08h55m10.831s", "dec": "-7d14m42.53s", "prefetch": False})
     f2 = next(x for x in r2.json()["frames"] if x["id"] == f["id"])
     assert f2["ready"] and f2["wavelength_um"] == pytest.approx(2.0)
+    assert f2["quality"] == "ok" and 0 <= f2["flagged_fraction"] < 0.5
+    n = 59  # ceil(0.1° / 6.15″)
+    assert f2["target_xy"] == pytest.approx([(n - 1) / 2, (n - 1) / 2], abs=0.6)
     assert calls == {"tap": 1, "cutout": 1}
 
 
-def test_band_filter(client):
+def test_band_filter_and_detector_format(client):
     c, _ = client
     body = c.get("/api/frames", params={"ra": RA, "dec": DEC, "band": 18, "prefetch": False}).json()
-    assert {f["detector"] for f in body["frames"]} == {2} or body["count"] == 0
+    assert {f["detector"] for f in body["frames"]} <= {"D2"}
+    body = c.get("/api/frames", params={"ra": RA, "dec": DEC, "detector": "D1", "prefetch": False}).json()
+    assert [f["detector"] for f in body["frames"]] == ["D1"]
+    assert c.get("/api/frames", params={"ra": RA, "dec": DEC, "detector": "D9"}).status_code == 422
 
 
-def test_flags_layer_and_errors(client):
+def test_pagination(client):
+    c, _ = client
+    body = c.get("/api/frames", params={"ra": RA, "dec": DEC, "limit": 1, "offset": 1, "prefetch": False}).json()
+    assert body["n_frames"] == 2 and len(body["frames"]) == 1 and body["frames"][0]["detector"] == "D3"
+
+
+def test_flags_layer_and_errors_are_json(client):
     c, _ = client
     c.get("/api/frames", params={"ra": RA, "dec": DEC, "prefetch": False})
-    url = f"/api/frame/2025W19_1B_0116_1D3/image.png?ra={RA}&dec={DEC}&layer=flags&bits=21"
-    assert c.get(url).status_code == 200
-    assert c.get(f"/api/frame/no_existe/meta?ra={RA}&dec={DEC}").status_code == 404
-    assert c.get(f"/api/frame/../etc/meta?ra={RA}&dec={DEC}").status_code == 404
-    assert c.get("/api/frames", params={"ra": "abc", "dec": DEC}).status_code == 422
-    assert c.get("/api/frames", params={"ra": RA, "dec": DEC, "size": 5}).status_code == 422
+    for bits in ("21", "SOURCE", "SOURCE,HOT"):
+        url = f"/api/frame/2025W19_1B_0116_1D3/png?ra={RA}&dec={DEC}&layer=flags&bits={bits}"
+        assert c.get(url).status_code == 200
+    legacy = c.get(f"/api/frame/2025W19_1B_0116_1D3/image.png?ra={RA}&dec={DEC}")
+    assert legacy.status_code == 200
+    for url, code in [
+        (f"/api/frame/no_existe/meta?ra={RA}&dec={DEC}", 404),
+        (f"/api/frame/../etc/meta?ra={RA}&dec={DEC}", 404),
+        (f"/api/frames?ra=abc&dec={DEC}", 422),
+        (f"/api/frames?ra={RA}&dec={DEC}&size=5", 422),
+        ("/api/frames?ra=1", 422),
+        ("/api/frames?target=pluton", 422),
+        (f"/api/frame/2025W19_1B_0116_1D3/png?ra={RA}&dec={DEC}&layer=flags&bits=NO_EXISTE", 422),
+    ]:
+        r = c.get(url)
+        assert r.status_code == code, url
+        if code != 404 or "etc" not in url:
+            assert set(r.json()) == {"error", "detail"}, url

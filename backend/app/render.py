@@ -1,7 +1,11 @@
-"""Remuestreo a una grilla común (norte arriba) y render a PNG.
+"""Remuestreo a una grilla de cielo común (norte arriba) y render a PNG.
 
-PROVISIONAL: la alineación "de verdad" (con movimiento propio) es core.align() de Nacho.
-Esto solo deja todas las exposiciones en la misma grilla para que el video no rote.
+Por qué no core.align_frames para el video: align_frames TRASLADA cada recorte para
+centrar el objetivo, pero no lo rota, y SPHEREx observa cada visita con otro ángulo
+de posición. Para el video hace falta una grilla de cielo fija (norte arriba): así el
+fondo queda quieto y el objetivo se mueve, que es justo lo que pide O4. Dónde cae el
+objetivo en cada cuadro lo calcula core.targets (movimiento propio) y viaja en
+`target_xy`. core.align_frames queda para restas y fotometría (cubos centrados).
 """
 from __future__ import annotations
 
@@ -44,13 +48,28 @@ def reproject(c: Cutout, layer: np.ndarray, ra: float, dec: float, size_deg: flo
     return out.reshape(n, n)
 
 
-def stretch(img: np.ndarray, vmin: float | None = None, vmax: float | None = None) -> np.ndarray:
+def grid_xy(ra_c: float, dec_c: float, size_deg: float, ra: float, dec: float) -> list[float]:
+    """Dónde cae (ra, dec) en el PNG devuelto: píxeles base 0, x a la derecha, y hacia abajo."""
+    w, n = target_wcs(ra_c, dec_c, size_deg)
+    x, y = w.all_world2pix([[ra, dec]], 0)[0]
+    return [round(float(x), 2), round(float(n - 1 - y), 2)]
+
+
+STRETCHES = ("linear", "asinh")
+
+
+def stretch(img: np.ndarray, vmin: float | None = None, vmax: float | None = None,
+            kind: str = "linear") -> np.ndarray:
     ok = np.isfinite(img)
     if vmin is None or vmax is None:
         lo, hi = ZScaleInterval().get_limits(img[ok]) if ok.sum() > 10 else (0.0, 1.0)
+        if kind == "asinh" and ok.any():  # asinh deja ver fuentes brillantes sin quemar el fondo
+            hi = max(hi, float(np.nanpercentile(img[ok], 99.7)))
         vmin = lo if vmin is None else vmin
         vmax = hi if vmax is None else vmax
     scaled = np.nan_to_num(np.clip((img - vmin) / max(vmax - vmin, 1e-12), 0, 1))
+    if kind == "asinh":
+        scaled = np.arcsinh(10 * scaled) / np.arcsinh(10)
     out = (scaled * 255).astype(np.uint8)
     out[~ok] = 0
     return out
@@ -66,7 +85,7 @@ def to_png(gray_or_rgba: np.ndarray) -> bytes:
 
 def render_png(c: Cutout, ra: float, dec: float, size_deg: float, layer: str = "image",
                bits: list[int] | None = None, vmin: float | None = None,
-               vmax: float | None = None) -> bytes:
+               vmax: float | None = None, kind: str = "linear") -> bytes:
     """layer: image | image-zodi | variance | flags (máscara RGBA transparente con los bits pedidos)."""
     if layer == "flags":
         f = reproject(c, c.flags, ra, dec, size_deg, order=0)
@@ -83,4 +102,4 @@ def render_png(c: Cutout, ra: float, dec: float, size_deg: float, layer: str = "
     }.get(layer)
     if data is None:
         raise ValueError(f"capa desconocida: {layer}")
-    return to_png(stretch(reproject(c, data, ra, dec, size_deg), vmin, vmax))
+    return to_png(stretch(reproject(c, data, ra, dec, size_deg), vmin, vmax, kind))

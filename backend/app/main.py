@@ -1,26 +1,46 @@
-"""API del visor SPHEREx. Ejecutar desde backend/:  uvicorn app.main:app --reload"""
+"""API del visor SPHEREx (contracts/api.md v0). Ejecutar desde backend/:  uvicorn app.main:app --reload"""
 from __future__ import annotations
 
 import logging
 import re
 
-import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import cache, frames, irsa, precompute, render
+from . import cache, frames, irsa, precompute, render, science
 from .settings import get_settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="SPHEREx Visor API", version="0.1.0")
+app = FastAPI(title="SPHEREx Visor API", version="0.2.0",
+              description="Contrato: contracts/api.md (v0). Errores siempre como {error, detail}.")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
 
 _ID_RE = re.compile(r"^[0-9A-Za-z_]+$")
+_ERROR_NAMES = {400: "bad_request", 404: "not_found", 422: "invalid_parameter",
+                501: "not_implemented", 502: "irsa_unavailable"}
 
+
+# ---------- errores: siempre JSON {error, detail} (contrato, principio 4) ----------
+
+@app.exception_handler(StarletteHTTPException)
+async def http_error(_: Request, exc: StarletteHTTPException):
+    return JSONResponse({"error": _ERROR_NAMES.get(exc.status_code, "error"), "detail": exc.detail},
+                        status_code=exc.status_code)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(_: Request, exc: RequestValidationError):
+    detail = "; ".join(f"{'.'.join(str(p) for p in e['loc'][1:])}: {e['msg']}" for e in exc.errors())
+    return JSONResponse({"error": "invalid_parameter", "detail": detail}, status_code=422)
+
+
+# ---------- parámetros comunes ----------
 
 def parse_coords(ra: str, dec: str) -> tuple[float, float]:
     """Acepta grados (133.795, -7.245) o sexagesimal (08h55m10.831s / 08:55:10.8, -7d14m42.53s)."""
@@ -41,6 +61,25 @@ def check_size(size: float | None) -> float:
     return size
 
 
+def resolve(ra: str | None, dec: str | None, size: float | None, target: str | None) -> frames.Query:
+    """`target` (eps_ind_b, wise_0855, rw_aur, r_dra) gana sobre ra/dec."""
+    if target is not None and target not in science.target_keys():
+        raise HTTPException(422, f"target desconocido: {target!r}. Opciones: {science.target_keys()}")
+    if target is None and (ra is None or dec is None):
+        raise HTTPException(422, "hace falta target, o bien ra y dec")
+    ra_d, dec_d = parse_coords(ra, dec) if target is None else (None, None)
+    return frames.resolve(ra_d, dec_d, check_size(size), target)
+
+
+def parse_detector(detector: str | None) -> int | None:
+    if detector is None:
+        return None
+    m = re.fullmatch(r"[Dd]?([1-6])", detector.strip())
+    if not m:
+        raise HTTPException(422, "detector debe ser D1..D6")
+    return int(m[1])
+
+
 def obs_or_404(frame_id: str) -> irsa.Observation:
     o = cache.load_observation(frame_id) if _ID_RE.match(frame_id) else None
     if o is None:
@@ -48,32 +87,34 @@ def obs_or_404(frame_id: str) -> irsa.Observation:
     return o
 
 
-def cutout_or_502(o: irsa.Observation, ra: float, dec: float, size: float) -> cache.Cutout:
+def cutout_or_502(o: irsa.Observation, q: frames.Query) -> cache.Cutout:
     try:
-        return cache.get_cutout(o, ra, dec, size)
+        return cache.get_cutout(o, q.ra, q.dec, q.size)
     except irsa.IrsaError as e:
         raise HTTPException(502, str(e)) from e
 
+
+def irsa_guard(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except irsa.IrsaError as e:
+        raise HTTPException(502, str(e)) from e
+
+
+def core_guard(fn, *args, **kwargs):
+    """Las funciones de core/ que aún no existen (tareas 22 y 23) responden 501, no 500."""
+    try:
+        return irsa_guard(fn, *args, **kwargs)
+    except NotImplementedError as e:
+        raise HTTPException(501, f"core/ todavía no implementa esto: {e}") from e
+
+
+# ---------- endpoints ----------
 
 @app.get("/api/health")
 def health():
     s = get_settings()
     return {"status": "ok", "collections": list(s.collections), "label": s.release_label}
-
-
-@app.get("/api/frames")
-def get_frames(
-    ra: str, dec: str,
-    size: float | None = None,
-    band: int | None = Query(None, ge=1, le=102),
-    detector: int | None = Query(None, ge=1, le=6),
-    prefetch: bool = True,
-):
-    ra_d, dec_d = parse_coords(ra, dec)
-    try:
-        return frames.list_frames(ra_d, dec_d, check_size(size), band, detector, prefetch)
-    except irsa.IrsaError as e:
-        raise HTTPException(502, str(e)) from e
 
 
 @app.get("/api/targets")
@@ -82,67 +123,69 @@ def get_targets():
     return {"targets": precompute.load_summary()}
 
 
+@app.get("/api/frames")
+def get_frames(
+    ra: str | None = None, dec: str | None = None, target: str | None = None,
+    size: float | None = None,
+    band: int | None = Query(None, ge=1, le=102),
+    detector: str | None = None,
+    prefetch: bool = True,
+    limit: int | None = Query(None, ge=1, le=5000),
+    offset: int = Query(0, ge=0),
+):
+    q = resolve(ra, dec, size, target)
+    return irsa_guard(frames.list_frames, q, band, parse_detector(detector), prefetch, limit, offset)
+
+
 @app.get("/api/coverage")
-def get_coverage(ra: str, dec: str, size: float | None = None):
-    ra_d, dec_d = parse_coords(ra, dec)
-    try:
-        return frames.coverage(ra_d, dec_d, check_size(size))
-    except irsa.IrsaError as e:
-        raise HTTPException(502, str(e)) from e
+def get_coverage(ra: str | None = None, dec: str | None = None, target: str | None = None,
+                 size: float | None = None):
+    return irsa_guard(frames.coverage, resolve(ra, dec, size, target))
 
 
-@app.get("/api/frame/{frame_id}/image.png")
-def get_frame_image(
-    frame_id: str, ra: str, dec: str, size: float | None = None,
+@app.get("/api/frame/{frame_id}/png")
+def get_frame_png(
+    frame_id: str, ra: str | None = None, dec: str | None = None, target: str | None = None,
+    size: float | None = None,
     layer: str = Query("image", pattern="^(image|image-zodi|variance|flags)$"),
-    bits: str | None = Query(None, description="bits de FLAGS separados por coma (layer=flags)"),
+    bits: str | None = Query(None, description="bits o nombres de FLAGS separados por coma (layer=flags)"),
+    stretch: str = Query("asinh", pattern="^(linear|asinh)$"),
     vmin: float | None = None, vmax: float | None = None,
 ):
-    ra_d, dec_d = parse_coords(ra, dec)
-    size = check_size(size)
-    c = cutout_or_502(obs_or_404(frame_id), ra_d, dec_d, size)
-    bit_list = [int(b) for b in bits.split(",") if b.strip()] if bits else None
-    png = render.render_png(c, ra_d, dec_d, size, layer, bit_list, vmin, vmax)
+    q = resolve(ra, dec, size, target)
+    c = cutout_or_502(obs_or_404(frame_id), q)
+    try:
+        bit_list = [science.bit_of(b.strip()) for b in bits.split(",") if b.strip()] if bits else None
+    except KeyError as e:
+        raise HTTPException(422, str(e)) from e
+    png = render.render_png(c, q.ra, q.dec, q.size, layer, bit_list, vmin, vmax, stretch)
     return Response(png, media_type="image/png", headers={"Cache-Control": "public, max-age=86400"})
 
 
+@app.get("/api/frame/{frame_id}/image.png", include_in_schema=False)
+def get_frame_image_legacy(frame_id: str, ra: str | None = None, dec: str | None = None,
+                           target: str | None = None, size: float | None = None,
+                           layer: str = "image", bits: str | None = None,
+                           vmin: float | None = None, vmax: float | None = None):
+    """Ruta vieja (PR #1); la del contrato es /png."""
+    return get_frame_png(frame_id, ra, dec, target, size, layer, bits, "linear", vmin, vmax)
+
+
 @app.get("/api/frame/{frame_id}/meta")
-def get_frame_meta(frame_id: str, ra: str, dec: str, size: float | None = None):
-    ra_d, dec_d = parse_coords(ra, dec)
-    size = check_size(size)
+def get_frame_meta(frame_id: str, ra: str | None = None, dec: str | None = None,
+                   target: str | None = None, size: float | None = None):
+    q = resolve(ra, dec, size, target)
     o = obs_or_404(frame_id)
-    c = cutout_or_502(o, ra_d, dec_d, size)
-    h = c.header
-    lam = c.wavelength_at(ra_d, dec_d)
-    x, y = c.wcs.all_world2pix([[ra_d, dec_d]], 0)[0]
-    i, j = int(round(float(y))), int(round(float(x)))
-    inside = 0 <= i < c.flags.shape[0] and 0 <= j < c.flags.shape[1]
-    target_flags = int(c.flags[i, j]) if inside else None
-    n_pix = c.flags.size
-    s = get_settings()
-    return {
-        "id": o.id,
-        "observation": o.to_dict(),
-        "date_obs": h.get("DATE-OBS"),
-        "mjd_avg": h.get("MJD-AVG"),
-        "exposure_s": h.get("XPOSURE"),
-        "detector": o.detector,
-        "wavelength_um": lam,
-        "band": s.band_of(o.detector, lam) if lam is not None else None,
-        "bandwidth_um": float(c.bandwidth_um[i, j]) if inside else None,
-        "bunit": h.get("BUNIT"),
-        "psf_fwhm_arcsec": h.get("PSF_FWHM"),
-        "quality": {"l1": h.get("L1DQAFLG"), "l2": h.get("L2DQAFLG"), "fine_astrometry": h.get("FINAST")},
-        "shape": list(c.image.shape),
-        "target_pixel": {"x": float(x), "y": float(y), "inside": inside,
-                         "value": float(c.image[i, j]) if inside else None,
-                         "variance": float(c.variance[i, j]) if inside else None,
-                         "zodi": float(c.zodi[i, j]) if inside else None},
-        "flags": [
-            {"bit": bit, "name": name,
-             "fraction": round(float(np.mean((c.flags & (1 << bit)) > 0)), 4),
-             "at_target": bool(target_flags & (1 << bit)) if target_flags is not None else None}
-            for name, bit in sorted(c.flag_bits.items(), key=lambda kv: kv[1])
-        ],
-        "flags_pixels": n_pix,
-    }
+    return frames.frame_meta(o, cutout_or_502(o, q), q)
+
+
+@app.get("/api/spectrum")
+def get_spectrum(ra: str | None = None, dec: str | None = None, target: str | None = None,
+                 size: float | None = None):
+    return core_guard(frames.spectrum, resolve(ra, dec, size, target))
+
+
+@app.get("/api/lightcurve")
+def get_lightcurve(band: int = Query(..., ge=1, le=102), ra: str | None = None,
+                   dec: str | None = None, target: str | None = None, size: float | None = None):
+    return core_guard(frames.lightcurve, resolve(ra, dec, size, target), band)
