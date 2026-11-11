@@ -1,0 +1,82 @@
+/* Estilos globales y tokens. Cada área puede tener su propio CSS en features/<area>/<area>.css
+   (importado desde su componente) usando SOLO estas variables. Oscuro por defecto: es un visor de cielo. */
+:root {
+  --bg: #0b0f17;
+  --surface: #121826;
+  --surface-2: #192133;
+  --border: #263049;
+  --text: #e6eaf2;
+  --muted: #8d97ad;
+  --accent: #7cc4ff;       /* interacción, selección */
+  --accent-2: #ffb86b;     /* objetivo, cruz, resaltados */
+  --ok: #5fd39a;
+  --warn: #f2c14e;
+  --bad: #ff6b7a;
+  --mask: #ff3df2;         /* capa de máscara FLAGS */
+  /* colores por detector (D1 azul … D6 rojo, como la λ) */
+  --d1: #6aa8ff; --d2: #5fd3e0; --d3: #5fd39a; --d4: #d6d35f; --d5: #ffa45f; --d6: #ff6b7a;
+  --radius: 10px;
+  --gap: 14px;
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'Cascadia Code', 'SF Mono', Menlo, monospace;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--font); }
+h1, h2, h3 { margin: 0; font-weight: 600; }
+h1 { font-size: 18px; }
+h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 10px; }
+a { color: var(--accent); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--gap);
+  padding: 12px 20px; border-bottom: 1px solid var(--border); background: var(--surface); flex-wrap: wrap;
+}
+.app-header p { margin: 2px 0 0; font-size: 12px; }
+.header-actions { display: flex; align-items: center; gap: 10px; }
+.app-footer { padding: 14px 20px; font-size: 12px; border-top: 1px solid var(--border); }
+
+.layout {
+  flex: 1; display: grid; gap: var(--gap); padding: var(--gap);
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(260px, 340px);
+  align-items: start;
+}
+.col-nav, .col-main, .col-inspect { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+@media (max-width: 1180px) {
+  .layout { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); }
+  .col-inspect { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .layout { grid-template-columns: minmax(0, 1fr); padding: 10px 16px; }
+  .col-main { order: -1; }
+}
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; min-width: 0; }
+.placeholder { color: var(--muted); padding: 24px; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius); }
+
+/* controles comunes */
+.btn, button, select, input {
+  font: inherit; color: var(--text); background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 10px;
+}
+button { cursor: pointer; }
+button:hover:not(:disabled) { border-color: var(--accent); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+button.primary { background: var(--accent); color: #04121f; border-color: var(--accent); font-weight: 600; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; padding: 5px 9px; }
+.seg button.on { background: var(--accent); color: #04121f; font-weight: 600; }
+
+.badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+.badge.ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); }
+.badge.warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); }
+.badge.bad { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+
+.notice { font-size: 12px; padding: 8px 10px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--warn); }
+.notice.error { border-left-color: var(--bad); }
+.notice.info { border-left-color: var(--accent); }
