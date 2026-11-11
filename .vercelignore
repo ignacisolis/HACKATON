@@ -1,0 +1,8 @@
+# Vercel solo necesita la web y los fixtures que importa; el resto (Python, cachés, kit viejo) no sube
+/*
+!/frontend
+!/contracts
+!/vercel.json
+/frontend/node_modules
+/frontend/dist
+/contracts/*.md
