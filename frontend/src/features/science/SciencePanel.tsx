@@ -166,6 +166,7 @@ export default function SciencePanel() {
       </div>
 
       {USE_FIXTURES && <p className="notice sci-demo" role="note">{t('science.demo')}</p>}
+      {view.target === 'r_dra' && !view.pick && <p className="notice" role="note">{t('science.saturated')}</p>}
 
       {!query ? <p className="notice info">{t('science.pos.none')}</p> : (
         <>

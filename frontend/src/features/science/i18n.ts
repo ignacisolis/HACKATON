@@ -5,6 +5,7 @@ import type { Dict } from '../../i18n'
 const d: Dict = {
   en: {
     'science.title': 'Spectrum and light curve',
+    'science.saturated': 'R Draconis is so bright that it saturates SPHEREx (BLOOM and HALO flags): its flux and spectrum are not reliable. For variability and spectra use RW Aurigae.',
     'science.demo': 'Demo data: wavelengths and bandwidths are real, but the fluxes and the light curve are made up. These are not measurements.',
 
     'science.pos.pickBadge': 'Clicked point',
@@ -87,6 +88,7 @@ const d: Dict = {
   },
   es: {
     'science.title': 'Espectro y curva de luz',
+    'science.saturated': 'R Draconis es tan brillante que satura SPHEREx (flags BLOOM y HALO): su flujo y su espectro no son confiables. Para variabilidad y espectros usá RW Aurigae.',
     'science.demo': 'Datos de demostración: las longitudes de onda y los anchos de banda son reales, pero los flujos y la curva de luz son inventados. No son mediciones.',
 
     'science.pos.pickBadge': 'Punto elegido',
