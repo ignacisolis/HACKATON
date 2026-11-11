@@ -33,8 +33,8 @@ Listo:
     core.targets        posiciones propagadas por movimiento propio (tarea 6)
     core.flags          decodificar la capa FLAGS y sus mascaras (tarea 8)
     core.align          alineacion por WCS con movimiento propio (tarea 21)
+    core.subtract       resta, apilado y deteccion de dipolo (tarea 22)
 Firmas, sin implementar:
-    core.subtract       tarea 22 (la validacion is_comparable() ya funciona)
     core.spectrum       tarea 23
 """
 from core import align, datatypes, flags, spectrum, subtract, targets  # noqa: F401
@@ -42,7 +42,8 @@ from core.align import align_frames, centroid, shift_series, target_pixel  # noq
 from core.flags import bit_counts, decode, good_pixels, mask_for  # noqa: F401
 from core.spectrum import combine, light_curve  # noqa: F401
 from core.spectrum import extract as extract_spectrum  # noqa: F401
-from core.subtract import coadd, comparable_pairs, is_comparable  # noqa: F401
+from core.subtract import coadd, comparable_pairs, dipole_snr  # noqa: F401
+from core.subtract import is_comparable, subtract_aligned  # noqa: F401
 from core.subtract import subtract as subtract_frames  # noqa: F401
 from core.targets import needs_pm_correction, target_position, target_skycoord  # noqa: F401
 from core.datatypes import AlignedCube, Frame, SpectrumPoint  # noqa: F401
@@ -57,7 +58,8 @@ __all__ = [
     # tarea 21
     "align_frames", "target_pixel", "shift_series", "centroid",
     # tarea 22
-    "subtract_frames", "is_comparable", "comparable_pairs", "coadd",
+    "subtract_frames", "subtract_aligned", "is_comparable", "comparable_pairs",
+    "coadd", "dipole_snr",
     # tarea 23
     "extract_spectrum", "combine", "light_curve",
     # tipos de intercambio

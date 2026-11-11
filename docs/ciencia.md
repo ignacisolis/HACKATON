@@ -3,8 +3,8 @@
 Lo que el resto del equipo necesita saber del lado científico, y de dónde sale
 cada número. Mantiene esta página el rol C (Nacho).
 
-Estado: **tareas 5, 6, 7, 8 y 21 cerradas.** Toda la Fase 0 del rol C está
-lista, más la alineación de la Fase 2.
+Estado: **tareas 5, 6, 7, 8, 21 y 22 cerradas.** Toda la Fase 0 del rol C está
+lista, más la Fase 2 completa. Queda la 23 (espectros) y la 27 (validar).
 
 ---
 
@@ -461,7 +461,106 @@ significa que para medir el movimiento propio de WISE 0855 en serio —que son
 1.35 px en toda la ventana— hace falta restar fondo y ajustar una PSF. Eso es
 parte de la tarea 23, y conviene no prometer precisión sub-píxel antes.
 
-## 6. Cómo reproducir todo esto
+## 6. Resta y apilado (tarea 22)
+
+`core.subtract_frames()` y `core.subtract_aligned()` restan dos cuadros
+comparables; `core.coadd()` apila visitas repetidas; `core.dipole_snr()` mide el
+dipolo que deja un objeto en movimiento.
+
+### 6.1 Hay dos formas de alinear y eligen qué se ve
+
+No son dos maneras de hacer lo mismo:
+
+| Alineado sobre | Qué queda fijo | Para qué sirve |
+|---|---|---|
+| el **objetivo** (`target_key=...`) | el objetivo | apilar, fotometría, espectros |
+| el **cielo** (`ra=`, `dec=`) | el fondo | **restar** y ver movimiento propio |
+
+Si se resta un cubo alineado sobre el objetivo, el objetivo se cancela y el
+movimiento **no se ve**: la resta queda vacía, que parece un resultado correcto.
+Es el mismo patrón de fallo silencioso que las coordenadas de 2010 y la máscara
+`SOURCE`. Por eso el cubo lleva `aligned_on` y `subtract_aligned()` se niega,
+explicando qué hacer, salvo que se pase `warn_if_target_aligned=False`.
+
+### 6.2 El hallazgo con datos reales: casi nada es comparable
+
+Bajé **6 recortes reales** de R Dra del detector D2 y medí la longitud de onda
+en la posición del objetivo, de `WCS-WAVE`:
+
+| # | MJD | λ (µm) | ancho (µm) |
+|---|---|---|---|
+| 0 | 60834.7884 | 1.4017 | 0.0336 |
+| 1 | 60834.7899 | 1.4359 | 0.0347 |
+| 2 | 60834.7914 | 1.4706 | 0.0357 |
+| 3 | 60834.7929 | 1.5067 | 0.0368 |
+| 4 | 60835.5358 | 1.5431 | 0.0376 |
+| 5 | 60835.5373 | 1.5806 | 0.0383 |
+
+**0 de 15 pares resultaron comparables.**
+
+Y la razón es estructural, no un problema de la tolerancia: cada exposición
+consecutiva se corre ~0.035 µm, que es **casi exactamente un ancho de banda**.
+SPHEREx va cambiando de canal espectral entre exposiciones; así construye las
+102 bandas. O sea: **seis exposiciones seguidas dan seis bandas distintas, no
+seis medidas de una banda.**
+
+De paso, esto **confirma empíricamente los 17 canales por detector**, que hasta
+ahora venían de las notas de Fase 0: D2 cubre 1.10–1.65 µm = 0.55 µm, y
+0.55 / 0.035 ≈ 16.
+
+**Lo que implica para la consideración C5 y para el backend:** los pares
+comparables hay que buscarlos **en todo el archivo**, no entre exposiciones
+vecinas. De las 89 observaciones de D2 sobre R Dra, las que caen en el mismo
+canal son ~5 (sección 3.3). Conviene que `/api/frames` exponga el **canal** de
+cada cuadro, no solo el detector y la λ, para que el frontend pueda ofrecer
+pares válidos en vez de dejar que el usuario elija dos cualesquiera y reciba un
+error.
+
+### 6.3 Qué cuenta como "se movió", medido
+
+`dipole_snr()` pide tres cosas, y la tercera salió de medirla:
+
+1. Los **dos** lóbulos sobre el umbral. Un pico positivo solo puede ser un rayo
+   cósmico o un cambio de brillo.
+2. Separación mayor que cero.
+3. Los dos lóbulos **juntos**, a menos de 4 px.
+
+El punto 3 no es un número elegido a dedo. Con el desplazamiento real de WISE
+0855 los lóbulos quedan a **2.0 px**; en un par **sin** movimiento aparecían dos
+picos de 3.5 y 6.2 sigma pero a **8.1 px**, en esquinas opuestas de la caja. Sin
+el límite de separación, eso pasaba por detección. Una fuente puntual desplazada
+deja el positivo y el negativo pegados; dos picos lejanos son dos cosas
+distintas.
+
+### 6.4 Limitación: no se igualan las PSF
+
+La resta es directa. Si los dos cuadros se remuestrearon con corrimientos
+distintos, uno queda más suavizado que el otro y la diferencia deja residuos
+alrededor de **todas** las fuentes del campo. Medido en el par sin movimiento:
+hasta **6 sigma**.
+
+Por eso `detected` significa "hay algo con forma de dipolo acá", no "este objeto
+se movió con certeza". Para una medición publicable hay que convolucionar los dos
+cuadros a una PSF común, y para eso está la extensión `PSF` de los FITS — la
+misma que la caché descarta por peso, así que habría que traerla aparte. Queda
+para la tarea 27.
+
+La prueba `test_la_resta_sin_igualar_psf_deja_residuos` fija esa limitación: si
+algún día falla, es buena noticia, y entonces se puede endurecer `dipole_snr`.
+
+### 6.5 Un sesgo en la longitud de onda que conviene saber
+
+`WCS-WAVE` trae los coeficientes SIP espaciales pero su `CTYPE` es `WAVE-TAB`,
+y astropy avisa que **aplica el SIP igual**. Medí cuánto cambia: **0.003 µm**,
+un 9 % del ancho de banda.
+
+No alcanza para cambiar si dos cuadros son comparables (el umbral son 0.017 µm),
+así que la tarea 22 no se ve afectada. Pero son 3 nm de sesgo sistemático cuando
+IRSA documenta `WCS-WAVE` como una aproximación de ~1 nm. Para el visor alcanza;
+para un número publicable hay que usar el producto **Spectral WCS** (`CWAVE` y
+`CBAND`), como recomienda IRSA. Importa para la tarea 23.
+
+## 7. Cómo reproducir todo esto
 
 ```bash
 pip install -r requirements.txt
@@ -472,4 +571,5 @@ python core/fetch_coverage.py     # regenera config/coverage.yaml desde IRSA
 python core/test_targets.py       # 10 pruebas, incluida la de la época
 python core/test_flags.py         # 35 pruebas de bits y máscaras
 python core/test_align.py         # 26 pruebas de alineación
+python core/test_subtract.py      # 25 pruebas de resta y apilado
 ```

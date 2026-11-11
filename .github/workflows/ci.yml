@@ -57,6 +57,11 @@ jobs:
         # NO queda centrado.
         run: python core/test_align.py
 
+      - name: Pruebas de resta y apilado
+        # Incluye el criterio de aceptacion de la tarea 22: el movimiento de
+        # WISE 0855 se ve en la resta, con su desplazamiento real de 1.35 px.
+        run: python core/test_subtract.py
+
       - name: Los YAML de config parsean y tienen lo que deben
         run: |
           python - <<'PY'

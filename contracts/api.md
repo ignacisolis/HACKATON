@@ -202,7 +202,10 @@ Camilo puede escribir contra esto hoy.
 | `core.align_frames(frames, target_key=...)` | ✅ **funciona** | `AlignedCube` |
 | `core.target_pixel(frame, target_key=...)` | ✅ funciona | `(x, y)` dónde cae el objetivo |
 | `core.shift_series(frames, target_key=...)` | ✅ funciona | corrimientos sin remuestrear |
-| `core.subtract_frames(a, b)` | firma, **valida ya** | `(diff, var, usable)` |
+| `core.subtract_frames(a, b)` | ✅ **funciona** | `(diff, var, usable)` |
+| `core.subtract_aligned(cube, i, j)` | ✅ funciona | resta dos cuadros del cubo |
+| `core.coadd(cube)` | ✅ funciona | `(img, var, n_eff)` apilado ponderado |
+| `core.dipole_snr(diff, var)` | ✅ funciona | mide el movimiento (O4) |
 | `core.extract_spectrum(frames, target_key=...)` | firma | lista de `SpectrumPoint` |
 
 > **Ojo con los nombres.** El Tablero los llama `core.align()`, `core.subtract()`

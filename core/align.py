@@ -178,8 +178,27 @@ def align_frames(frames, target_key=None, ra=None, dec=None, out_shape=None,
     target_key : str, opcional
         Clave de config/targets.yaml. Propaga el movimiento propio a cada MJD,
         que es lo que hace que WISE 0855 quede centrado en todas las fechas.
+        Esto alinea SOBRE EL OBJETIVO: `aligned_on = "target"`.
     ra, dec : float, opcional
-        Alternativa a target_key, en grados ICRS, ya a la epoca correcta.
+        Una posicion fija en grados ICRS. Esto alinea SOBRE EL CIELO:
+        `aligned_on = "sky"`.
+
+    Las dos formas de alinear, y por que importa la diferencia
+    ---------------------------------------------------------
+    No son dos maneras de hacer lo mismo. Deciden que se ve al restar:
+
+      target_key=...  el objetivo queda fijo y el fondo se mueve.
+                      Es lo que hay que usar para APILAR (coadd) y para medir
+                      fotometria y espectros. Si se restan dos cuadros asi, el
+                      objetivo se cancela y el movimiento NO se ve.
+
+      ra=..., dec=... el fondo queda fijo y el objetivo se mueve.
+                      Es lo que hay que usar para RESTAR y ver movimiento
+                      propio: el objeto deja un dipolo, negativo donde estaba y
+                      positivo donde esta.
+
+    Elegir mal no da error: da una resta vacia que parece correcta. Por eso el
+    cubo lleva `aligned_on` y `core.subtract` avisa cuando no corresponde.
     out_shape : (ny, nx), opcional
         Forma de los cuadros de salida. Por defecto, la del recorte mas chico.
     drop_if_outside : bool
@@ -211,6 +230,9 @@ def align_frames(frames, target_key=None, ra=None, dec=None, out_shape=None,
                 + "; cada detector mide longitudes de onda distintas"
             )
 
+    # De que se alineo depende por completo lo que significa una resta despues.
+    modo = "target" if target_key is not None else "sky"
+
     ordered = sorted(frames, key=lambda f: f.mjd)
     if out_shape is None:
         out_shape = (min(f.image.shape[0] for f in ordered),
@@ -224,7 +246,7 @@ def align_frames(frames, target_key=None, ra=None, dec=None, out_shape=None,
     xx = xx.astype(float)
     yy = yy.astype(float)
 
-    imgs, vars_, flgs, mjds, dets, lams, shifts = [], [], [], [], [], [], []
+    imgs, vars_, flgs, mjds, dets, lams, bws, shifts = [], [], [], [], [], [], [], []
     dropped = []
 
     for f in ordered:
@@ -257,6 +279,7 @@ def align_frames(frames, target_key=None, ra=None, dec=None, out_shape=None,
         mjds.append(f.mjd)
         dets.append(f.detector)
         lams.append(f.wavelength_um)
+        bws.append(f.bandwidth_um)
         shifts.append((cx - xt, cy - yt))
 
     if not imgs:
@@ -266,7 +289,7 @@ def align_frames(frames, target_key=None, ra=None, dec=None, out_shape=None,
             variance=np.empty((0, ny, nx), dtype=float),
             center=(cx, cy), mjds=np.empty(0), detectors=[],
             wavelengths_um=np.empty(0), shifts_px=np.empty((0, 2)),
-            dropped=dropped,
+            bandwidths_um=np.empty(0), aligned_on=modo, dropped=dropped,
         )
 
     return AlignedCube(
@@ -278,6 +301,8 @@ def align_frames(frames, target_key=None, ra=None, dec=None, out_shape=None,
         detectors=dets,
         wavelengths_um=np.asarray(lams, dtype=float),
         shifts_px=np.asarray(shifts, dtype=float),
+        bandwidths_um=np.asarray(bws, dtype=float),
+        aligned_on=modo,
         dropped=dropped,
     )
 

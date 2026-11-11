@@ -352,8 +352,9 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 - [x] **Cobertura de los 4 objetivos** (`config/coverage.yaml`): observaciones, fechas, detectores y longitud de onda por detector.
 - [x] **`core/align.py`**: alineación por WCS con corrección de movimiento propio (tarea 21). 26 pruebas, incluido el criterio de aceptación y la contraprueba de que sin corregir no centra.
 - [x] Notebook de Fase 0 movido a `core/` (tarea 5).
-- [ ] `core/subtract.py` y `core/spectrum.py` (tareas 22 y 23). Las firmas están; `is_comparable()` ya valida.
-- [x] CI en GitHub Actions: 71 pruebas en cada push y PR.
+- [x] **`core/subtract.py`**: resta de cuadros comparables, apilado ponderado y detección de dipolo (tarea 22). 25 pruebas.
+- [ ] `core/spectrum.py` (tarea 23). Las firmas están.
+- [x] CI en GitHub Actions: 96 pruebas en cada push y PR.
 - [ ] Todo lo demás del roadmap (Fases 1 a 6).
 
 > **Corrección:** las versiones anteriores de este README daban por hecho un

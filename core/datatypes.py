@@ -68,6 +68,14 @@ class AlignedCube:
     detectors: list            # (n_frames,) 'D1'..'D6'
     wavelengths_um: np.ndarray  # 1D (n_frames,) lambda en el objetivo
     shifts_px: np.ndarray      # 2D (n_frames, 2) corrimiento aplicado a cada cuadro
+    # Ancho de banda de cada cuadro. Hace falta para decidir que cuadros son
+    # comparables sin volver a los Frame de origen: la tolerancia de la resta es
+    # una fraccion del ancho de banda, no un numero fijo.
+    bandwidths_um: np.ndarray = None
+    # Como se alineo el cubo. Cambia por completo lo que significa una resta:
+    #   'target'  el objetivo esta fijo y el fondo se mueve  -> para apilar
+    #   'sky'     el fondo esta fijo y el objetivo se mueve   -> para restar
+    aligned_on: str = "target"
     dropped: list = field(default_factory=list)  # cuadros descartados y por que
 
     def __len__(self):
