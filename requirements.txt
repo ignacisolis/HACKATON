@@ -1,0 +1,21 @@
+# Dependencias del proyecto.
+#
+# Instalar con:
+#     pip install -r requirements.txt
+#
+# Esto es lo que necesita core/ (rol C). backend/ y frontend/ van a sumar lo
+# suyo cuando se fije el stack (tarea 1 del Tablero): la propuesta del README es
+# FastAPI y uvicorn para el backend.
+#
+# astroquery NO esta aca a proposito: su resolucion de nombres apunta a hosts de
+# SIMBAD que ya no responden desde la red del equipo. Las consultas van con
+# urllib + certifi. Ver docs/ciencia.md seccion 2.
+
+numpy>=2.0
+astropy>=7.0
+pyyaml>=6.0
+certifi>=2024.0
+
+# Solo para graficar espectros a mano; nada de core/ lo importa todavia, y el
+# CI no lo necesita.
+# matplotlib>=3.8

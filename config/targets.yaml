@@ -1,0 +1,303 @@
+# config/targets.yaml
+#
+# Astrometria de los 4 objetivos de prueba del hackathon, mas los objetos
+# de contexto que caen en el mismo recorte.
+#
+# GENERADO: no editar a mano. Se regenera con:
+#     python core/fetch_targets.py
+#
+# Fuente de los numeros: SIMBAD (tabla basic) via TAP, mirror de Harvard.
+# Las coordenadas de SIMBAD estan en ICRS a epoca J2000.0. El movimiento
+# propio va en mas/ano, con pm_ra_cosdec ya multiplicado por cos(dec).
+#
+# POR QUE ESTE ARCHIVO EXISTE
+# Las coordenadas del enunciado son de la epoca de descubrimiento. SPHEREx
+# observa en 2025-2026. Para WISE 0855 y eps Ind B esa diferencia son ~20
+# pixeles de SPHEREx: si se apunta a las coordenadas del enunciado se mide
+# cielo vacio. Usar el bloque `positions` o propagar con core/targets.py.
+#
+# Campos por objeto:
+#   astrometry     valores crudos de SIMBAD a epoca J2000
+#   positions      posicion propagada al inicio y fin de la ventana SPHEREx
+#   pm_correction  required | negligible, segun el umbral de medio pixel
+#   sources        bibcode de cada medicion, para citar en la presentacion
+
+schema_version: 1
+generated_utc: 2026-11-10T22:05:45Z
+generator: core/fetch_targets.py
+simbad_endpoint: https://simbad.harvard.edu/simbad/sim-tap/sync
+reference_frame: ICRS
+coord_epoch: J2000.0
+spherex_pixel_arcsec: 6.2
+spherex_window: [2025-04-24, 2026-10-02]
+pm_correction_threshold_arcsec: 3.1
+
+# --- Objetivos de la demo (O5 del enunciado) ---
+targets:
+  eps_ind_b:
+    label: Epsilon Indi B (Ba+Bb)
+    simbad_id: '* eps Ind B'
+    otype: BD*
+    sp_type: T1V+T6V
+    astrometry:
+      frame: ICRS
+      coord_epoch: J2000.0
+      ra_deg: 331.04414659
+      dec_deg: -56.7828442
+      coord_err_maj_mas: 0.5048
+      coord_err_min_mas: 0.4676
+      coord_quality: A
+      pm_ra_cosdec_mas_yr: 3981.977
+      pm_dec_mas_yr: -2466.832
+      pm_total_mas_yr: 4684.2
+      pm_total_arcsec_yr: 4.6842
+      pm_err_maj_mas_yr: 0.602
+      pm_quality: A
+      parallax_mas: 270.658
+      parallax_err_mas: 0.6896
+      distance_pc: 3.69
+      radial_velocity_km_s: null
+    sources:
+      coordinates: 2020yCat.1350....0G
+      proper_motion: 2020yCat.1350....0G
+      parallax: 2020yCat.1350....0G
+      simbad_update_date: '2026-09-18'
+      simbad_nbref: 179
+    positions:
+      j2000:
+        epoch: J2000.0
+        ra_deg: 331.04414659
+        dec_deg: -56.7828442
+        drift_from_j2000_arcsec: 0.0
+        drift_from_j2000_px: 0.0
+      spherex_start:
+        epoch: '2025-04-24'
+        ra_deg: 331.09527441
+        dec_deg: -56.80017699
+        drift_from_j2000_arcsec: 118.56
+        drift_from_j2000_px: 19.12
+      spherex_end:
+        epoch: '2026-10-02'
+        ra_deg: 331.09818493
+        dec_deg: -56.80116257
+        drift_from_j2000_arcsec: 125.3
+        drift_from_j2000_px: 20.21
+    pm_correction: required
+    demo: par de enanas cafes orbitando una estrella
+    companion_separation:
+      from: eps_ind_a
+      arcsec: 402.5
+      px: 64.9
+      note: A y B caen en pixeles distintos; Ba y Bb (0.72 arcsec) se mezclan en uno
+  wise_0855:
+    label: WISE 0855-0714
+    simbad_id: WISEA J085510.74-071442.5
+    otype: BD*
+    sp_type: Y2
+    astrometry:
+      frame: ICRS
+      coord_epoch: J2000.0
+      ra_deg: 133.81890825
+      dec_deg: -7.247048
+      coord_err_maj_mas: null
+      coord_err_min_mas: null
+      coord_quality: C
+      pm_ra_cosdec_mas_yr: -8123.7
+      pm_dec_mas_yr: 673.2
+      pm_total_mas_yr: 8151.5
+      pm_total_arcsec_yr: 8.1515
+      pm_err_maj_mas_yr: 1.3
+      pm_quality: C
+      parallax_mas: 439
+      parallax_err_mas: 2.4
+      distance_pc: 2.28
+      radial_velocity_km_s: null
+    sources:
+      coordinates: 2021ApJS..253....7K
+      proper_motion: 2021ApJS..253....7K
+      parallax: 2021ApJS..253....7K
+      simbad_update_date: '2026-10-14'
+      simbad_nbref: 145
+    positions:
+      j2000:
+        epoch: J2000.0
+        ra_deg: 133.81890825
+        dec_deg: -7.247048
+        drift_from_j2000_arcsec: 0.0
+        drift_from_j2000_px: 0.0
+      spherex_start:
+        epoch: '2025-04-24'
+        ra_deg: 133.76133467
+        dec_deg: -7.2423114
+        drift_from_j2000_arcsec: 206.32
+        drift_from_j2000_px: 33.28
+      spherex_end:
+        epoch: '2026-10-02'
+        ra_deg: 133.75805885
+        dec_deg: -7.24204168
+        drift_from_j2000_arcsec: 218.06
+        drift_from_j2000_px: 35.17
+    pm_correction: required
+    demo: movimiento propio muy alto
+    statement_coords:
+      ra_sexagesimal: 08h55m10.831s
+      dec_sexagesimal: -07d14m42.53s
+      ra_deg: 133.79512917
+      dec_deg: -7.24514722
+      implied_epoch: ~2010.5, epoca WISE codificada en la designacion
+      offset_from_spherex_end_arcsec: 132.9
+      offset_from_spherex_end_px: 21.4
+      note: no usar estas coordenadas para apuntar; estan en positions
+  rw_aur:
+    label: RW Aurigae A
+    simbad_id: V* RW Aur A
+    otype: Or*
+    sp_type: K6
+    astrometry:
+      frame: ICRS
+      coord_epoch: J2000.0
+      ra_deg: 76.95606759
+      dec_deg: 30.40132636
+      coord_err_maj_mas: 0.0365
+      coord_err_min_mas: 0.0252
+      coord_quality: A
+      pm_ra_cosdec_mas_yr: 2.641
+      pm_dec_mas_yr: -27.398
+      pm_total_mas_yr: 27.5
+      pm_total_arcsec_yr: 0.0275
+      pm_err_maj_mas_yr: 0.049
+      pm_quality: A
+      parallax_mas: 6.4062
+      parallax_err_mas: 0.0441
+      distance_pc: 156.1
+      radial_velocity_km_s: null
+    sources:
+      coordinates: 2020yCat.1350....0G
+      proper_motion: 2020yCat.1350....0G
+      parallax: 2020yCat.1350....0G
+      simbad_update_date: '2026-08-31'
+      simbad_nbref: 45
+    positions:
+      j2000:
+        epoch: J2000.0
+        ra_deg: 76.95606759
+        dec_deg: 30.40132636
+        drift_from_j2000_arcsec: 0.0
+        drift_from_j2000_px: 0.0
+      spherex_start:
+        epoch: '2025-04-24'
+        ra_deg: 76.95608912
+        dec_deg: 30.40113373
+        drift_from_j2000_arcsec: 0.7
+        drift_from_j2000_px: 0.11
+      spherex_end:
+        epoch: '2026-10-02'
+        ra_deg: 76.95609034
+        dec_deg: 30.40112277
+        drift_from_j2000_arcsec: 0.74
+        drift_from_j2000_px: 0.12
+    pm_correction: negligible
+    demo: estrella variable (T Tauri)
+  r_dra:
+    label: R Draconis
+    simbad_id: V* R Dra
+    otype: Mi*
+    sp_type: M4.5-6+e
+    astrometry:
+      frame: ICRS
+      coord_epoch: J2000.0
+      ra_deg: 248.16761083
+      dec_deg: 66.75497942
+      coord_err_maj_mas: 0.0669
+      coord_err_min_mas: 0.066
+      coord_quality: A
+      pm_ra_cosdec_mas_yr: -20.643
+      pm_dec_mas_yr: 6.149
+      pm_total_mas_yr: 21.5
+      pm_total_arcsec_yr: 0.0215
+      pm_err_maj_mas_yr: 0.085
+      pm_quality: A
+      parallax_mas: 1.2509
+      parallax_err_mas: 0.0648
+      distance_pc: 799.42
+      radial_velocity_km_s: -132.8
+    sources:
+      coordinates: 2020yCat.1350....0G
+      proper_motion: 2020yCat.1350....0G
+      parallax: 2020yCat.1350....0G
+      simbad_update_date: '2026-03-30'
+      simbad_nbref: 154
+    positions:
+      j2000:
+        epoch: J2000.0
+        ra_deg: 248.16761083
+        dec_deg: 66.75497942
+        drift_from_j2000_arcsec: 0.0
+        drift_from_j2000_px: 0.0
+      spherex_start:
+        epoch: '2025-04-24'
+        ra_deg: 248.16724309
+        dec_deg: 66.75502265
+        drift_from_j2000_arcsec: 0.55
+        drift_from_j2000_px: 0.09
+      spherex_end:
+        epoch: '2026-10-02'
+        ra_deg: 248.16722217
+        dec_deg: 66.75502511
+        drift_from_j2000_arcsec: 0.58
+        drift_from_j2000_px: 0.09
+    pm_correction: negligible
+    demo: 'variable Mira: brillo y espectro'
+
+# --- Objetos de contexto, no son objetivos de la demo ---
+context:
+  eps_ind_a:
+    label: Epsilon Indi A
+    simbad_id: '* eps Ind'
+    otype: PM*
+    sp_type: K5V
+    astrometry:
+      frame: ICRS
+      coord_epoch: J2000.0
+      ra_deg: 330.84022344
+      dec_deg: -56.78597855
+      coord_err_maj_mas: 0.0687
+      coord_err_min_mas: 0.0655
+      coord_quality: A
+      pm_ra_cosdec_mas_yr: 3966.661
+      pm_dec_mas_yr: -2536.192
+      pm_total_mas_yr: 4708.1
+      pm_total_arcsec_yr: 4.7081
+      pm_err_maj_mas_yr: 0.086
+      pm_quality: A
+      parallax_mas: 274.8431
+      parallax_err_mas: 0.0956
+      distance_pc: 3.64
+      radial_velocity_km_s: -40.035
+    sources:
+      coordinates: 2020yCat.1350....0G
+      proper_motion: 2020yCat.1350....0G
+      parallax: 2020yCat.1350....0G
+      simbad_update_date: '2026-09-25'
+      simbad_nbref: 637
+    positions:
+      j2000:
+        epoch: J2000.0
+        ra_deg: 330.84022344
+        dec_deg: -56.78597855
+        drift_from_j2000_arcsec: 0.0
+        drift_from_j2000_px: 0.0
+      spherex_start:
+        epoch: '2025-04-24'
+        ra_deg: 330.89117405
+        dec_deg: -56.80380414
+        drift_from_j2000_arcsec: 119.2
+        drift_from_j2000_px: 19.23
+      spherex_end:
+        epoch: '2026-10-02'
+        ra_deg: 330.8940754
+        dec_deg: -56.80481807
+        drift_from_j2000_arcsec: 125.98
+        drift_from_j2000_px: 20.32
+    pm_correction: required
+    note: la estrella K5V del sistema; contamina el recorte de eps Ind B
