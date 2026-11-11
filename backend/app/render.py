@@ -56,6 +56,7 @@ def grid_xy(ra_c: float, dec_c: float, size_deg: float, ra: float, dec: float) -
 
 
 STRETCHES = ("linear", "asinh")
+ASINH_SOFT, ASINH_MAX = 3.0, 5.0
 
 
 def stretch(img: np.ndarray, vmin: float | None = None, vmax: float | None = None,
@@ -63,13 +64,14 @@ def stretch(img: np.ndarray, vmin: float | None = None, vmax: float | None = Non
     ok = np.isfinite(img)
     if vmin is None or vmax is None:
         lo, hi = ZScaleInterval().get_limits(img[ok]) if ok.sum() > 10 else (0.0, 1.0)
-        if kind == "asinh" and ok.any():  # asinh deja ver fuentes brillantes sin quemar el fondo
-            hi = max(hi, float(np.nanpercentile(img[ok], 99.7)))
         vmin = lo if vmin is None else vmin
         vmax = hi if vmax is None else vmax
-    scaled = np.nan_to_num(np.clip((img - vmin) / max(vmax - vmin, 1e-12), 0, 1))
+    x = (img - vmin) / max(vmax - vmin, 1e-12)
     if kind == "asinh":
-        scaled = np.arcsinh(10 * scaled) / np.arcsinh(10)
+        # El fondo ocupa el rango zscale y las fuentes brillantes (hasta 5x ese rango) se comprimen
+        # sin quemarse. No depende de percentiles: un par de píxeles calientes no oscurece el cuadro.
+        x = np.arcsinh(ASINH_SOFT * np.clip(x, 0, ASINH_MAX)) / np.arcsinh(ASINH_SOFT * ASINH_MAX)
+    scaled = np.nan_to_num(np.clip(x, 0, 1))
     out = (scaled * 255).astype(np.uint8)
     out[~ok] = 0
     return out

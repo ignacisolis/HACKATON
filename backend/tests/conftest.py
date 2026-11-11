@@ -38,6 +38,7 @@ RA, DEC = 133.79513, -7.24515
 @pytest.fixture
 def settings(tmp_path, monkeypatch):
     monkeypatch.setenv("SPHEREX_CACHE_DIR", str(tmp_path / "cache"))
+    monkeypatch.setenv("SPHEREX_WARM", "0")
     s = load_settings()
     monkeypatch.setattr("app.settings.get_settings", lambda: s)
     for mod in (cache, frames, irsa, main, precompute):

@@ -111,3 +111,20 @@ def test_flags_layer_and_errors_are_json(client):
         assert r.status_code == code, url
         if code != 404 or "etc" not in url:
             assert set(r.json()) == {"error", "detail"}, url
+
+
+def test_meta_with_nan_target_pixel(client, monkeypatch):
+    """Un píxel NaN en el objetivo (estrella saturada) no rompe el JSON: viaja como null."""
+    from app import cache as cache_mod
+    real = cache_mod.compact_from_fits
+
+    def with_nan(raw):
+        c = real(raw)
+        c.image[:] = np.nan
+        return c
+
+    monkeypatch.setattr(cache_mod, "compact_from_fits", with_nan)
+    c, _ = client
+    f = c.get("/api/frames", params={"ra": RA, "dec": DEC, "prefetch": False}).json()["frames"][1]
+    r = c.get(f["meta_url"])
+    assert r.status_code == 200 and r.json()["target"]["value"] is None

@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
+import threading
+from contextlib import asynccontextmanager
 
 from astropy import units as u
 from astropy.coordinates import SkyCoord
@@ -17,7 +20,28 @@ from .settings import get_settings
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="SPHEREx Visor API", version="0.2.0",
+log = logging.getLogger("app")
+
+
+def warm_targets() -> None:
+    """Lee una vez los resúmenes de los objetivos precalculados (R Dra: 2476 cuadros, ~18 s en frío)."""
+    for t in precompute.load_summary():
+        if t.get("cached"):
+            try:
+                frames.list_frames(frames.resolve(None, None, t["size"], t["key"]), do_prefetch=False)
+                log.info("objetivo listo en memoria: %s", t["key"])
+            except Exception as e:  # el arranque nunca debe caerse por esto
+                log.warning("no se pudo precalentar %s: %s", t["key"], e)
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    if os.environ.get("SPHEREX_WARM", "1") == "1":
+        threading.Thread(target=warm_targets, name="warm-targets", daemon=True).start()
+    yield
+
+
+app = FastAPI(title="SPHEREx Visor API", version="0.2.0", lifespan=lifespan,
               description="Contrato: contracts/api.md (v0). Errores siempre como {error, detail}.")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
 

@@ -105,6 +105,12 @@ def resolve(ra: float | None, dec: float | None, size: float, target: str | None
 # ---------- resumen por cuadro (memorizado: los .npz no cambian) ----------
 
 _summary_memo: dict[str, dict] = {}
+_query_locks: dict[Query, threading.Lock] = {}
+
+
+def _query_lock(q: Query) -> threading.Lock:
+    with _inflight_guard:
+        return _query_locks.setdefault(q, threading.Lock())
 
 
 def frame_summary(o: irsa.Observation, q: Query, s: Settings) -> dict | None:
@@ -182,8 +188,9 @@ def list_frames(q: Query, band: int | None = None, detector: int | None = None,
         obs = [o for o in obs if o.detector == detector]
 
     items, missing = [], []
-    for o in obs:
-        sm = frame_summary(o, q, s)
+    with _query_lock(q):  # si el precalentamiento ya está en esta consulta, se espera en vez de duplicar
+        summaries = [frame_summary(o, q, s) for o in obs]
+    for o, sm in zip(obs, summaries):
         if sm is None:
             missing.append(o)
         elif lam_range and (sm["wavelength_um"] is None
@@ -210,6 +217,12 @@ def list_frames(q: Query, band: int | None = None, detector: int | None = None,
 
 # ---------- GET /api/frame/{id}/meta ----------
 
+def _finite(v) -> float | None:
+    """JSON no admite NaN: un píxel sin dato (p. ej. el núcleo saturado de R Dra) viaja como null."""
+    v = float(v)
+    return v if np.isfinite(v) else None
+
+
 def frame_meta(o: irsa.Observation, c: cache.Cutout, q: Query, s: Settings | None = None) -> dict:
     s = s or get_settings()
     sm = summarize(c, o, q, s)
@@ -217,7 +230,7 @@ def frame_meta(o: irsa.Observation, c: cache.Cutout, q: Query, s: Settings | Non
     w = c.wcs.wcs
     tp = sm["target_pixel"]
     i, j = int(round(tp["y"])), int(round(tp["x"]))
-    at = (lambda arr: float(arr[i, j])) if tp["inside"] else (lambda arr: None)
+    at = (lambda arr: _finite(arr[i, j])) if tp["inside"] else (lambda arr: None)
     flags_block = science.flags_report(c)
     target_bits = int(c.flags[i, j]) if tp["inside"] else 0
     flags_block["at_target"] = [science.core_flags.name_of(b) for b in range(32)
