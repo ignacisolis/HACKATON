@@ -1,7 +1,8 @@
 # Visor web de SPHEREx: el cielo en el tiempo
 
-> Proyecto para el **Hackathon NASA · SPHEREx**. Nombre provisional del proyecto: _por definir_.
-> Estado: **Fase 0 (exploración de datos) en curso.** Fecha límite del hackathon: _por definir_.
+> Proyecto para el **Hackathon NASA · SPHEREx**. Nombre del proyecto: **HackatonNASA**.
+> Estado: **Fase 1 (MVP) en curso.** Fecha límite del hackathon: **15 de noviembre de 2026**.
+> Stack: Python + FastAPI (backend y ciencia) · frontend web (por confirmar por B).
 
 ---
 
@@ -166,7 +167,7 @@ Usuario ──► Frontend (visor, video, espectro, URL) ──► Backend (API)
 | **5. Actualización y robustez** (sem. 10) | Configuración de versión, script de datos nuevos, manejo de errores, pruebas automáticas | El proyecto sobrevive a una actualización de datos |
 | **6. Pulido y presentación** (sem. final) | Interfaz clara, Aladin/SIMBAD, README en inglés, video demo, pitch | Presentación final |
 
-_Las semanas son orientativas y deben ajustarse a la fecha límite real._
+_Las semanas eran orientativas: con entrega el **15 de noviembre** hay ~5 días, así que se prioriza la lista "Imprescindible" de abajo y lo demás entra solo si sobra tiempo._
 
 ### Prioridades si el tiempo aprieta
 1. **Imprescindible:** coordenadas → video, selector de banda, URL con coordenadas, los 4 objetos funcionando.
@@ -337,8 +338,9 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 - [x] ~~Significado de cada bit de `FLAGS`~~ → hecho en la tarea 8: `config/flags.yaml`, 23 bits del Explanatory Supplement. Quedan 9 bits sin documentar en la propia fuente.
 - [x] ~~Confirmar si algún rango de longitud de onda se solapa entre detectores~~ → **no se solapan**, se encadenan: 0.75–5.01 µm sin huecos, con costuras de ~0.02 µm. Ver `docs/ciencia.md` sección 3.4.
 - [x] ~~Probar la descarga y extracción de espectros con datos reales~~ → hecho con 18 recortes de WISE 0855. Funciona donde el objeto domina (D5–D6); en el azul lo que se mide es una fuente mezclada. Ver `docs/ciencia.md` 7.3.
-- [ ] Fecha límite del hackathon y lenguajes que maneja cada integrante (para fijar el stack, por ejemplo Python + FastAPI y JavaScript).
-- [ ] Definir el nombre del proyecto.
+- [x] Fecha límite del hackathon: **15 de noviembre de 2026**.
+- [x] Nombre del proyecto: **HackatonNASA**.
+- [ ] Stack del frontend (lo define B). Backend: Python + FastAPI.
 - [ ] Volcar el reparto de roles a `docs/EQUIPO.md` (los roles ya están confirmados: ver sección 8).
 
 ## 11. Estado actual

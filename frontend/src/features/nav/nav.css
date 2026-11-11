@@ -1,0 +1,77 @@
+/* Área "nav": coordenadas, objetivos, recorte, enlaces y Aladin. Solo variables de index.css. */
+.nav, .nav-sky { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.nav h2, .nav-sky h2 { margin-bottom: 0; }
+.nav p, .nav-sky p { margin: 0; }
+
+.nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin: 0 0 6px; }
+.nav-help { font-size: 12px; }
+.nav-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* formulario */
+.nav-form { display: flex; flex-direction: column; gap: 6px; }
+.nav-fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.nav-field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); min-width: 0; }
+.nav-field input { width: 100%; min-width: 0; }
+.nav-field input[aria-invalid='true'] { border-color: var(--bad); }
+.nav-go { min-width: 48px; }
+.nav-error { font-size: 12px; color: var(--bad); }
+@media (max-width: 380px) {
+  .nav-fields { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* posición actual */
+.nav-current { padding: 8px 10px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--border); }
+.nav-current .mono { font-size: 13px; overflow-wrap: anywhere; }
+.nav-sexa { color: var(--text); }
+
+.nav-pm { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+
+/* atajos */
+.nav-section { display: flex; flex-direction: column; }
+.nav-targets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.nav-target {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 8px 10px;
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+}
+.nav-target.on { border-color: var(--accent-2); box-shadow: inset 3px 0 0 var(--accent-2); }
+.nav-target-name { font-weight: 600; color: var(--text); }
+.nav-target.on .nav-target-name { color: var(--accent-2); }
+.nav-target-hint { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+/* tamaño del recorte */
+.nav-fov { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 6px; }
+.nav-fov button { display: flex; flex-direction: column; align-items: center; gap: 0; padding: 5px 4px; line-height: 1.2; }
+.nav-fov small { font-size: 10px; opacity: .8; }
+
+/* enlaces */
+.nav-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.nav-links a.btn { text-decoration: none; font-size: 13px; }
+.nav-links a.btn:hover { border-color: var(--accent); }
+
+/* Aladin */
+.nav-sky-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.nav-sky-surveys button { font-size: 12px; padding: 4px 8px; }
+.nav-sky-frame {
+  position: relative; height: 300px; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--border); background: var(--bg);
+}
+.nav-sky-frame.failed { display: none; }
+.nav-sky-host { position: absolute; inset: 0; }
+.nav-sky-placeholder { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; }
+@media (max-width: 760px) {
+  .nav-sky-frame { height: 260px; }
+}
+
+.nav-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.nav-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.nav-legend .sw { display: inline-block; width: 12px; height: 12px; }
+.nav-legend .sw.box { border: 2px solid var(--accent); }
+.nav-legend .sw.pos { position: relative; }
+.nav-legend .sw.pos::before, .nav-legend .sw.pos::after { content: ''; position: absolute; background: var(--accent-2); }
+.nav-legend .sw.pos::before { left: 5px; top: 0; width: 2px; height: 12px; }
+.nav-legend .sw.pos::after { top: 5px; left: 0; height: 2px; width: 12px; }
+.nav-legend .sw.j2k { border: 2px solid var(--muted); border-radius: 50%; }
+
+.nav-picked { display: flex; flex-direction: column; gap: 6px; }
+.nav-picked-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.nav-credit { font-size: 11px; }

@@ -223,10 +223,40 @@ Los tipos de intercambio (`Frame`, `AlignedCube`, `SpectrumPoint`) están en
 incluye la PSF** a propósito: viene sin recortar (~4.9 MB) y es ~99 % del peso
 de un cutout.
 
+## Decisiones del backend (Camilo, 2026-11-10)
+
+Implementado en la rama `back` y probado con datos reales. Cada punto tiene un test en
+`backend/tests/test_contract.py`, que compara las respuestas con los fixtures de esta carpeta.
+
+1. **`id` del cuadro: `2025W23_2B_0696_1D2`** (exposición + detector, sin barra). El formato
+   `l2b-…/level2_…` de los ejemplos rompe la ruta `/api/frame/{id}/…`. El release ya viaja
+   aparte en `release`. Si una exposición aparece en dos versiones, queda la más nueva.
+2. **PNG ya estirado** desde el backend: `/api/frame/{id}/png?stretch=asinh|linear`, con
+   `layer=image|image-zodi|variance|flags` y `bits=SOURCE,21` para la capa de máscaras.
+3. **Grilla de cielo fija, norte arriba**, centrada en `query.ra/dec`. SPHEREx observa cada
+   visita con otro ángulo y `core.align_frames` traslada sin rotar; para el video conviene que
+   las estrellas queden quietas y el objetivo se mueva (O4). `target_xy` está en píxeles del
+   PNG, base 0, **x a la derecha e y hacia abajo**, y cambia de cuadro a cuadro.
+4. **`detector`** se acepta como `D2` o `2`; siempre se devuelve `"D2"`.
+5. **Paginación** opcional con `limit` y `offset`; `n_frames` es siempre el total.
+6. **Carga progresiva.** `/api/frames` responde al instante; los cuadros que aún no se bajaron
+   traen `ready: false` y `null` en `wavelength_um`, `bandwidth_um`, `band`, `target_xy`,
+   `flagged_fraction` y `quality`. Arriba vienen `pending` y `complete`.
+7. **`quality`**: `bad` si el objetivo cae fuera o el header dice que el L2 no pasó el control
+   de calidad (`L2DQAFLG`); `suspect` si el píxel del objetivo está enmascarado para fotometría
+   o más de la mitad del recorte lo está; si no, `ok`.
+8. **`flagged_fraction`** es la fracción del recorte que excluye `core.flags.mask_for(…, "photometry")`.
+9. **`/api/spectrum` y `/api/lightcurve`** ya llaman a `core.extract_spectrum`, `core.combine`
+   y `core.light_curve` con `mask_purpose="photometry"`. Mientras sean firmas, responden
+   **501** `{"error": "not_implemented"}`.
+10. **Extras** que el backend agrega sin romper nada: `ready`, `meta_url`, `collection` (QR2, QR3
+    o deep), y `/api/coverage` y `/api/targets`. `/meta` agrega `flags.at_target` (bits prendidos
+    en el píxel del objetivo), `quality`, `target` y `psf_fwhm_arcsec`.
+
 ## Pendiente de acordar
 
-- [ ] ¿El backend devuelve PNG ya estirado, o arrays para que el frontend los estire? Cambia mucho el peso y quién decide el contraste.
+- [x] PNG ya estirado (`stretch=asinh|linear`). Ver la decisión 2.
 - [ ] Nombres de los endpoints y si van versionados (`/api/v1/...`).
 - [x] ~~Cómo se numeran las 102 bandas~~ → definido en `config/bands.yaml`: 1 a 102 por λ creciente, 17 por detector, espaciado **logarítmico** a R constante. Ojo: las bandas **se solapan** en las costuras entre detectores, así que `band` necesita el detector para ser único. Ver `docs/ciencia.md` 7.1 y 7.2.
-- [ ] Paginación de `/api/frames`: R Dra devuelve 2483 cuadros.
+- [x] Paginación con `limit`/`offset` (decisión 5).
 - [ ] Si `/api/subtract` es un endpoint o lo hace el frontend con dos cuadros.
