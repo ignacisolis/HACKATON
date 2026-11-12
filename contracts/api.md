@@ -253,10 +253,34 @@ Implementado en la rama `back` y probado con datos reales. Cada punto tiene un t
     o deep), y `/api/coverage` y `/api/targets`. `/meta` agrega `flags.at_target` (bits prendidos
     en el píxel del objetivo), `quality`, `target` y `psf_fwhm_arcsec`.
 
+### Implementado de la propuesta de Bruno (`propuesta-front-2026-11-11.md`, 2026-11-11)
+
+Camilo da el OK a la propuesta y ya está en `back` (falta el OK de Nacho para integrarla del todo):
+
+11. **`display_range` en cada cuadro `ready`** de `/api/frames`:
+    `{"zscale": [lo, hi], "p99_7": x}` en MJy/sr, medido sobre la misma imagen que se pinta (grilla
+    norte arriba). El frontend arma un `vmin`/`vmax` común por detector y lo pasa a `/png`.
+12. **`GET /api/diff?a=<id>&b=<id>&(target=…|ra=&dec=)&size=&vmax=&zodi=true&format=png|json`.**
+    Los dos cuadros se llevan a la grilla de cielo común (imagen, varianza y FLAGS), se valida con
+    `core.is_comparable` y se resta con `core.subtract_frames`. **Por defecto resta antes el modelo
+    ZODI** de cada uno (la luz zodiacal cambia entre visitas; sin eso la resta queda corrida de 0).
+    PNG divergente simétrico `[-vmax, +vmax]`, gris medio = 0, NaN transparente; `vmax` por defecto
+    = percentil 99.5 de `|a − b|`. Headers `X-Dipole-SNR` (el menor de los dos lóbulos de
+    `core.dipole_snr`), `X-Dipole-Detected` y `X-Diff-Vmax`, expuestos por CORS. `format=json`
+    devuelve la medición sin imagen (`dipole`, `dt_days`, `median_diff`, `n_usable`…).
+    **422** `{"error": "not_comparable", "detail": <motivo de core.is_comparable>}`; **404** si un id no existe.
+13. **`GET /api/pairs?(target=…|ra=&dec=)&detector=&band=&limit=`** — pares restables según
+    `core.is_comparable`, sacados del índice en disco (no baja ni abre archivos), del más separado en
+    el tiempo al menos, cada uno con su `diff_url`. Responde el punto abierto de `/api/subtract`:
+    la resta es un endpoint del backend, y el frontend elige el par de esta lista.
+
+Medido con datos reales: eps Ind B, D2, 525 días entre cuadros → dipolo detectado (72σ / 94σ, 1.4 px).
+WISE 0855, D6, 370 días → no detectado en un solo par (S/N ~2), como anticipaba `core.dipole_snr`.
+
 ## Pendiente de acordar
 
 - [x] PNG ya estirado (`stretch=asinh|linear`). Ver la decisión 2.
 - [ ] Nombres de los endpoints y si van versionados (`/api/v1/...`).
 - [x] ~~Cómo se numeran las 102 bandas~~ → definido en `config/bands.yaml`: 1 a 102 por λ creciente, 17 por detector, espaciado **logarítmico** a R constante. Ojo: las bandas **se solapan** en las costuras entre detectores, así que `band` necesita el detector para ser único. Ver `docs/ciencia.md` 7.1 y 7.2.
 - [x] Paginación con `limit`/`offset` (decisión 5).
-- [ ] Si `/api/subtract` es un endpoint o lo hace el frontend con dos cuadros.
+- [x] La resta es un endpoint: `/api/diff`, con los pares de `/api/pairs` (decisiones 12 y 13).

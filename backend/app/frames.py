@@ -102,9 +102,17 @@ def resolve(ra: float | None, dec: float | None, size: float, target: str | None
     return Query(ra, dec, size, None)
 
 
-# ---------- resumen por cuadro (memorizado: los .npz no cambian) ----------
+# ---------- resumen por cuadro: memoria + índice en disco ----------
+# El resumen (λ y ancho en el objetivo, banda, target_xy, flagged_fraction, quality,
+# display_range) se calcula una vez por cuadro y consulta, y se guarda en
+# cache/index/<consulta>.json. Así el servidor arranca sin abrir miles de .npz y los
+# pares restables (/api/pairs) salen del índice sin bajar ni leer nada.
+
+SUMMARY_VERSION = 2  # subir si cambia lo que guarda summarize(): invalida los índices viejos
 
 _summary_memo: dict[str, dict] = {}
+_index_loaded: set[str] = set()
+_index_dirty: set[str] = set()
 _query_locks: dict[Query, threading.Lock] = {}
 
 
@@ -113,15 +121,62 @@ def _query_lock(q: Query) -> threading.Lock:
         return _query_locks.setdefault(q, threading.Lock())
 
 
+def _qkey(q: Query) -> str:
+    return f"{q.ra:.5f}_{q.dec:+.5f}_{q.size:.4f}_{q.target or 'radec'}"
+
+
+def _index_path(q: Query, s: Settings):
+    return s.cache_dir / "index" / f"{_qkey(q)}.json"
+
+
+def _memo_key(o_id: str, q: Query, s: Settings) -> str:
+    return f"{s.cache_dir}/{_qkey(q)}/{o_id}"
+
+
+def _load_index(q: Query, s: Settings) -> None:
+    k = f"{s.cache_dir}/{_qkey(q)}"
+    if k in _index_loaded:
+        return
+    _index_loaded.add(k)
+    p = _index_path(q, s)
+    if not p.exists():
+        return
+    try:
+        data = json.loads(p.read_text())
+    except ValueError:
+        return  # índice corrupto: se reconstruye solo
+    if data.get("version") != SUMMARY_VERSION:
+        return
+    for o_id, sm in data["frames"].items():
+        _summary_memo.setdefault(_memo_key(o_id, q, s), sm)
+
+
+def save_index(q: Query, s: Settings) -> None:
+    """Escribe el índice de la consulta si hubo resúmenes nuevos (escritura atómica)."""
+    k = f"{s.cache_dir}/{_qkey(q)}"
+    if k not in _index_dirty:
+        return
+    prefix = k + "/"
+    frames_ = {mk[len(prefix):]: sm for mk, sm in list(_summary_memo.items()) if mk.startswith(prefix)}
+    p = _index_path(q, s)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"version": SUMMARY_VERSION, "query": q.to_dict(), "frames": frames_}))
+    tmp.replace(p)
+    _index_dirty.discard(k)
+
+
 def frame_summary(o: irsa.Observation, q: Query, s: Settings) -> dict | None:
-    """λ, ancho, banda, target_xy, flagged_fraction y quality de un cuadro cacheado."""
-    key = f"{s.cache_dir}/{cache.cutout_key(o.id, q.ra, q.dec, q.size)}/{q.target}"
+    """Resumen de un cuadro cacheado: memoria, después índice en disco, y si no, el .npz."""
+    _load_index(q, s)
+    key = _memo_key(o.id, q, s)
     if key in _summary_memo:
         return _summary_memo[key]
     c = cache.get_cached(o.id, q.ra, q.dec, q.size, s)
     if c is None:
         return None
     _summary_memo[key] = summary = summarize(c, o, q, s)
+    _index_dirty.add(f"{s.cache_dir}/{_qkey(q)}")
     return summary
 
 
@@ -145,6 +200,7 @@ def summarize(c: cache.Cutout, o: irsa.Observation, q: Query, s: Settings) -> di
         "target_xy": render.grid_xy(q.ra, q.dec, q.size, t_ra, t_dec),
         "flagged_fraction": frac,
         "quality": science.quality(c, inside, masked, frac),
+        "display_range": render.display_range(render.reproject(c, c.image, q.ra, q.dec, q.size)),
     }
 
 
@@ -166,6 +222,7 @@ def frame_item(o: irsa.Observation, q: Query, sm: dict | None, s: Settings) -> d
         "target_xy": sm and sm["target_xy"],
         "flagged_fraction": sm and sm["flagged_fraction"],
         "quality": sm and sm["quality"],
+        "display_range": sm and sm["display_range"],
         "ready": sm is not None,
     }
 
@@ -190,6 +247,7 @@ def list_frames(q: Query, band: int | None = None, detector: int | None = None,
     items, missing = [], []
     with _query_lock(q):  # si el precalentamiento ya está en esta consulta, se espera en vez de duplicar
         summaries = [frame_summary(o, q, s) for o in obs]
+        save_index(q, s)
     for o, sm in zip(obs, summaries):
         if sm is None:
             missing.append(o)
@@ -362,6 +420,7 @@ def coverage(q: Query, s: Settings | None = None) -> dict:
         e["count"] += by_date[day]["count"]
     for e in epochs:
         del e["_last"]
+    save_index(q, s)
 
     return {
         "query": q.to_dict(),
@@ -374,3 +433,125 @@ def coverage(q: Query, s: Settings | None = None) -> dict:
         "bands": {str(k): bands[k] for k in sorted(bands)},
         "bands_known": known,
     }
+
+
+# ---------- GET /api/diff y /api/pairs: resta de cuadros comparables (C5, O4) ----------
+
+class NotComparable(ValueError):
+    """Los cuadros no se pueden restar; el mensaje es el motivo de core.is_comparable."""
+
+
+def _grid_frame(o: irsa.Observation, q: Query, s: Settings, subtract_zodi: bool = True):
+    """Cuadro llevado a la grilla de cielo común, como core.Frame. Las estrellas quedan alineadas."""
+    c = cache.get_cutout(o, q.ra, q.dec, q.size, s)
+    sm = frame_summary(o, q, s) or summarize(c, o, q, s)
+    img, var, flags, w = render.grid_layers(c, q.ra, q.dec, q.size, subtract_zodi)
+    f = science.Frame(
+        image=img, flags=flags, variance=var, wcs=w, mjd=sm["mjd"], detector=f"D{o.detector}",
+        wavelength_um=sm["wavelength_um"] if sm["wavelength_um"] is not None else np.nan,
+        bandwidth_um=sm["bandwidth_um"] if sm["bandwidth_um"] is not None else np.nan,
+        release=o.version, meta={"id": o.id},
+    )
+    return f, sm
+
+
+def _jsonable(v):
+    if isinstance(v, dict):
+        return {k: _jsonable(x) for k, x in v.items()}
+    if isinstance(v, (list, tuple)):
+        return [_jsonable(x) for x in v]
+    if isinstance(v, (np.bool_, bool)):
+        return bool(v)
+    if isinstance(v, (np.integer, int)):
+        return int(v)
+    if isinstance(v, (np.floating, float)):
+        return float(v) if np.isfinite(v) else None
+    return v
+
+
+def diff(q: Query, a: irsa.Observation, b: irsa.Observation, subtract_zodi: bool = True,
+         s: Settings | None = None) -> dict:
+    """a − b en MJy/sr con core.subtract_frames, y el dipolo de movimiento con core.dipole_snr.
+
+    Por defecto se resta antes el modelo ZODI de cada cuadro: la luz zodiacal cambia entre
+    visitas separadas meses y, sin restarla, toda la diferencia queda corrida de cero.
+    """
+    s = s or get_settings()
+    fa, sa = _grid_frame(a, q, s, subtract_zodi)
+    fb, sb = _grid_frame(b, q, s, subtract_zodi)
+    if sa["wavelength_um"] is None or sb["wavelength_um"] is None:
+        raise NotComparable("el objetivo cae fuera del recorte en uno de los cuadros: no hay λ que comparar")
+    ok, why = science.core.is_comparable(fa, fb)
+    if not ok:
+        raise NotComparable(why)
+    d, var, usable = science.core.subtract_frames(fa, fb)
+    # El dipolo se busca donde está el objetivo a mitad de camino entre las dos fechas.
+    t_ra, t_dec = science.position_at(q.target, q.ra, q.dec, (fa.mjd + fb.mjd) / 2)
+    center = render.grid_array_xy(q.ra, q.dec, q.size, t_ra, t_dec)
+    dipole = science.core.dipole_snr(d, var, center=center)
+    finite = np.isfinite(d)
+    vmax = float(np.percentile(np.abs(d[finite]), 99.5)) if finite.any() else 1.0
+    return {
+        "diff": d, "usable": usable, "vmax_auto": vmax,
+        "info": _jsonable({
+            "query": q.to_dict(),
+            "a": {"id": a.id, "mjd": fa.mjd, "detector": fa.detector, "wavelength_um": fa.wavelength_um},
+            "b": {"id": b.id, "mjd": fb.mjd, "detector": fb.detector, "wavelength_um": fb.wavelength_um},
+            "dt_days": fa.mjd - fb.mjd,
+            "unit": "MJy/sr",
+            "zodi_subtracted": subtract_zodi,
+            "median_diff": float(np.median(d[finite])) if finite.any() else None,
+            "vmax_auto": vmax,
+            "n_usable": int(usable.sum()),
+            "dipole": dipole,
+            "dipole_center_xy": render.grid_xy(q.ra, q.dec, q.size, t_ra, t_dec),
+        }),
+    }
+
+
+def pairs(q: Query, detector: int | None = None, band: int | None = None, limit: int = 50,
+          s: Settings | None = None) -> dict:
+    """Pares restables según core.is_comparable, sacados del índice (no abre ni baja nada).
+
+    Ordenados de mayor a menor separación en el tiempo: es donde más se nota el movimiento.
+    Solo cuentan los cuadros ya en caché (`ready`); `pending` dice cuántos faltan.
+    """
+    from types import SimpleNamespace
+
+    s = s or get_settings()
+    obs = observations_at(q.ra, q.dec, s)
+    if band is not None:
+        detector = science.band_range(band)[0]
+    if detector is not None:
+        obs = [o for o in obs if o.detector == detector]
+    _, n = render.target_wcs(q.ra, q.dec, q.size)
+    ready, pending = [], 0
+    for o in obs:
+        sm = frame_summary(o, q, s)
+        if sm is None:
+            pending += 1
+        elif sm["wavelength_um"] is not None and (band is None or sm["band"] == band):
+            ready.append((o, sm, SimpleNamespace(
+                detector=f"D{o.detector}", wavelength_um=sm["wavelength_um"],
+                bandwidth_um=sm["bandwidth_um"], shape=(n, n))))
+    save_index(q, s)
+    found = []
+    for i in range(len(ready)):
+        for j in range(i + 1, len(ready)):
+            (oa, sa, fa), (ob, sb, fb) = ready[i], ready[j]
+            if fa.detector != fb.detector or not science.core.is_comparable(fa, fb)[0]:
+                continue
+            if sa["mjd"] < sb["mjd"]:  # a = la más reciente: a − b deja + donde está ahora
+                (oa, sa), (ob, sb) = (ob, sb), (oa, sa)
+            found.append({
+                "a": oa.id, "b": ob.id, "detector": fa.detector,
+                "dt_days": round(sa["mjd"] - sb["mjd"], 3),
+                "wavelength_um": [sa["wavelength_um"], sb["wavelength_um"]],
+                "band": [sa["band"], sb["band"]],
+                "quality": [sa["quality"], sb["quality"]],
+                "diff_url": f"/api/diff?a={oa.id}&b={ob.id}&{q.qs}",
+            })
+    found.sort(key=lambda p: -p["dt_days"])
+    return {"query": {**q.to_dict(), "band": band, "detector": f"D{detector}" if detector else None},
+            "n_pairs": len(found), "n_frames_ready": len(ready), "pending": pending,
+            "pairs": found[:limit]}

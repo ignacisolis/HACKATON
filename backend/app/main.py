@@ -43,7 +43,9 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="SPHEREx Visor API", version="0.2.0", lifespan=lifespan,
               description="Contrato: contracts/api.md (v0). Errores siempre como {error, detail}.")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
+DIFF_HEADERS = ["X-Dipole-SNR", "X-Dipole-Detected", "X-Diff-Vmax"]
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"],
+                   expose_headers=DIFF_HEADERS)  # sin esto el navegador no deja leer los headers de /diff
 
 _ID_RE = re.compile(r"^[0-9A-Za-z_]+$")
 _ERROR_NAMES = {400: "bad_request", 404: "not_found", 422: "invalid_parameter",
@@ -52,10 +54,18 @@ _ERROR_NAMES = {400: "bad_request", 404: "not_found", 422: "invalid_parameter",
 
 # ---------- errores: siempre JSON {error, detail} (contrato, principio 4) ----------
 
+class ApiError(HTTPException):
+    """HTTPException con un código de error propio (p. ej. not_comparable)."""
+
+    def __init__(self, status_code: int, error: str, detail: str):
+        super().__init__(status_code, detail)
+        self.error = error
+
+
 @app.exception_handler(StarletteHTTPException)
 async def http_error(_: Request, exc: StarletteHTTPException):
-    return JSONResponse({"error": _ERROR_NAMES.get(exc.status_code, "error"), "detail": exc.detail},
-                        status_code=exc.status_code)
+    error = getattr(exc, "error", None) or _ERROR_NAMES.get(exc.status_code, "error")
+    return JSONResponse({"error": error, "detail": exc.detail}, status_code=exc.status_code)
 
 
 @app.exception_handler(RequestValidationError)
@@ -213,3 +223,43 @@ def get_spectrum(ra: str | None = None, dec: str | None = None, target: str | No
 def get_lightcurve(band: int = Query(..., ge=1, le=102), ra: str | None = None,
                    dec: str | None = None, target: str | None = None, size: float | None = None):
     return core_guard(frames.lightcurve, resolve(ra, dec, size, target), band)
+
+
+@app.get("/api/diff")
+def get_diff(
+    a: str, b: str, ra: str | None = None, dec: str | None = None, target: str | None = None,
+    size: float | None = None, vmax: float | None = Query(None, gt=0),
+    format: str = Query("png", pattern="^(png|json)$"),
+    zodi: bool = Query(True, description="restar el modelo de luz zodiacal antes de la resta"),
+):
+    """a − b en MJy/sr (core.subtract_frames) en la misma grilla que /png.
+
+    PNG con escala divergente simétrica [−vmax, +vmax] (gris medio = 0). Un objeto que se movió
+    deja un dipolo: blanco donde está en `a`, negro donde estaba en `b`. Headers: X-Dipole-SNR
+    (el menor de los dos lóbulos, en sigmas), X-Dipole-Detected y X-Diff-Vmax.
+    `format=json` devuelve solo la medición, sin imagen.
+    """
+    q = resolve(ra, dec, size, target)
+    oa, ob = obs_or_404(a), obs_or_404(b)
+    try:
+        res = irsa_guard(frames.diff, q, oa, ob, zodi)
+    except frames.NotComparable as e:
+        raise ApiError(422, "not_comparable", str(e)) from e
+    info = res["info"]
+    if format == "json":
+        return info
+    dip = info["dipole"]
+    snr = min(dip.get("pos_snr") or 0.0, dip.get("neg_snr") or 0.0)
+    v = vmax or res["vmax_auto"]
+    headers = {"X-Dipole-SNR": f"{snr:.2f}", "X-Dipole-Detected": str(bool(dip.get("detected"))).lower(),
+               "X-Diff-Vmax": f"{v:.6g}", "Cache-Control": "public, max-age=86400"}
+    return Response(render.diff_png(res["diff"], v), media_type="image/png", headers=headers)
+
+
+@app.get("/api/pairs")
+def get_pairs(ra: str | None = None, dec: str | None = None, target: str | None = None,
+              size: float | None = None, band: int | None = Query(None, ge=1, le=102),
+              detector: str | None = None, limit: int = Query(50, ge=1, le=1000)):
+    """Pares de cuadros restables (core.is_comparable), del más separado en el tiempo al menos."""
+    q = resolve(ra, dec, size, target)
+    return irsa_guard(frames.pairs, q, parse_detector(detector), band, limit)
