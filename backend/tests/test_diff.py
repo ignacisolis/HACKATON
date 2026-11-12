@@ -162,3 +162,30 @@ def test_spectrum_saved_to_disk_and_memory_guard(three, settings, monkeypatch):
     monkeypatch.setenv("SPHEREX_SPECTRUM_MAX_FRAMES", "2")
     r = c.get("/api/spectrum", params={"ra": RA, "dec": DEC})
     assert r.status_code == 503 and r.json()["error"] == "too_heavy"
+
+
+def test_lightcurve_reads_stored_exposures(three, monkeypatch):
+    """Con el espectro guardado, la curva de luz no vuelve a abrir cuadros ni a hacer fotometría."""
+    from app import science
+    from core.datatypes import SpectrumPoint
+
+    c, _ = three
+    monkeypatch.setattr(science.core, "extract_spectrum", lambda frames, **kw: [
+        SpectrumPoint(f.wavelength_um, f.bandwidth_um, 1.0 + i, 0.1, f.mjd, f.detector, 9, 0.0,
+                      band=science.band_of(int(f.detector[1]), f.wavelength_um))
+        for i, f in enumerate(frames)])
+    monkeypatch.setattr(science.core, "combine", lambda pts: pts)
+    assert c.get("/api/spectrum", params={"ra": RA, "dec": DEC}).status_code == 200
+
+    monkeypatch.setattr(science.core, "extract_spectrum", lambda *a, **k: 1 / 0)
+    band = science.band_of(3, 2.0)
+    r = c.get("/api/lightcurve", params={"ra": RA, "dec": DEC, "band": band})
+    assert r.status_code == 200
+    body = r.json()
+    assert len(body["mjds"]) == 2 and body["mjds"] == sorted(body["mjds"])  # los dos cuadros de D3
+
+
+def test_root_redirects_to_docs(client):
+    c, _ = client
+    r = c.get("/", follow_redirects=False)
+    assert r.status_code in (302, 307) and r.headers["location"] == "/docs"

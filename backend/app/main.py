@@ -12,7 +12,7 @@ from astropy.coordinates import SkyCoord
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, RedirectResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import cache, frames, irsa, precompute, render, science
@@ -151,6 +151,12 @@ def core_guard(fn, *args, **kwargs):
 
 
 # ---------- endpoints ----------
+
+@app.get("/", include_in_schema=False)
+def root():
+    """La raíz lleva a la documentación interactiva (antes daba 404)."""
+    return RedirectResponse("/docs")
+
 
 @app.get("/api/health")
 def health():

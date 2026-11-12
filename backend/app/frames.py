@@ -1,6 +1,7 @@
 """Lógica de /api/frames: lista de cuadros + descarga progresiva en segundo plano."""
 from __future__ import annotations
 
+import dataclasses
 import json
 import logging
 import os
@@ -394,14 +395,29 @@ def _spectrum(q: Query, s: Settings) -> dict:
         "n_epochs_used": len(points),
         "n_frames_cached": len(frames),
         "points": [_point(p) for p in combined],
+        # Un punto por exposición, sin combinar: de acá sale /api/lightcurve sin volver a
+        # abrir los cuadros (en Render, recalcularlo tardaba ~1 min).
+        "exposures": [_jsonable(dataclasses.asdict(p)) for p in points],
     }
+
+
+def _exposure_points(q: Query, s: Settings) -> list:
+    """Los SpectrumPoint por exposición guardados con el espectro (lo calcula si hace falta)."""
+    from core.datatypes import SpectrumPoint
+
+    sp = spectrum(q, s)
+    if "exposures" not in sp:  # espectro guardado por una versión anterior
+        return science.extract_spectrum(ready_frames(q, s), q.target, q.ra, q.dec)
+    # JSON guarda NaN como null: los campos float vuelven a NaN (p. ej. λ de un píxel saturado de R Dra)
+    floats = {f.name for f in dataclasses.fields(SpectrumPoint) if "float" in str(f.type)}
+    return [SpectrumPoint(**{k: float("nan") if v is None and k in floats else v for k, v in e.items()})
+            for e in sp["exposures"]]
 
 
 def lightcurve(q: Query, band: int, s: Settings | None = None) -> dict:
     s = s or get_settings()
     det, lo, hi = science.band_range(band)
-    frames = [f for f in ready_frames(q, s) if f.detector == f"D{det}"]
-    points = science.extract_spectrum(frames, q.target, q.ra, q.dec)
+    points = _exposure_points(q, s)
     mjds, flux, err = science.light_curve(points, band)
     return {"query": {**q.to_dict(), "band": band}, "band_range_um": [lo, hi],
             "mjds": [float(m) for m in mjds], "flux": [float(f) for f in flux],
