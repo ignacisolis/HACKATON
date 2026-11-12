@@ -58,7 +58,7 @@ Desde la raíz del repo. `<usuario>` es tu usuario de Hugging Face.
    curl "https://<usuario>-spherex-api.hf.space/api/frames?target=wise_0855&detector=D6"
    ```
 
-7. **Pasarle la URL a Bruno** para el frontend (variable del front, p. ej. `VITE_API_URL`).
+7. **Pasarle la URL a Bruno** para el frontend: es `VITE_API_BASE=https://<usuario>-spherex-api.hf.space` (ver `frontend/src/api/client.ts`). El backend ya permite CORS desde cualquier origen.
 
 ## Mantenimiento
 
