@@ -1,18 +1,23 @@
-# Contrato de la API — v0 (propuesta)
+# Contrato de la API — v1
 
-> **Estado: BORRADOR, escrito por Nacho (rol C) el 2026-11-10.**
+> **Estado: ACORDADO. Cierra la tarea 3 del Tablero.**
 >
-> La tarea 3 del Tablero asigna este contrato a **los tres**, y Camilo es el
-> dueño de la API. Esto es una propuesta para tener algo concreto sobre lo que
-> discutir, no una decisión tomada. Bruno armó una versión v0 en su carpeta
-> `spherex-visor` el 5 de noviembre, pero nunca llegó a GitHub, así que no se
-> pudo partir de ella.
+> | Rol | Quién | OK |
+> |---|---|---|
+> | A · Backend | Camilo | decisiones 1–10 implementadas y 11–13 en el PR #7 |
+> | B · Frontend | Bruno | OK a v0 en el PR #4, y propuso 11–13 |
+> | C · Ciencia | Nacho | OK a 1–13 el 2026-11-11 |
 >
-> **Camilo y Bruno: cambien lo que haga falta.** Lo único que pido que no se
-> toque sin avisar son los campos marcados con 🔬, que vienen de `core/` y
-> reflejan cómo son los datos de SPHEREx de verdad.
-
-Marcar v1 cuando los tres den el OK. Cierra la tarea 3.
+> Cómo se llegó acá: el borrador inicial lo escribí yo (rol C) el 10/11, porque
+> el contrato v0 de Bruno nunca había llegado a GitHub y Camilo estaba frenado
+> esperándolo. Camilo lo implementó y agregó las decisiones 1–10 donde la
+> realidad no coincidía con mi borrador. Bruno dio el OK y propuso tres cosas
+> más, que Camilo implementó como 11–13.
+>
+> **A partir de acá el contrato obliga.** Un cambio va en un PR que toca solo
+> `contracts/`, con el OK de los tres, y actualiza su fixture en el mismo PR.
+> Los campos marcados con 🔬 vienen de `core/` y reflejan cómo son los datos de
+> SPHEREx de verdad: ésos no se cambian sin hablarlo.
 
 ---
 
@@ -280,7 +285,7 @@ WISE 0855, D6, 370 días → no detectado en un solo par (S/N ~2), como anticipa
 ## Pendiente de acordar
 
 - [x] PNG ya estirado (`stretch=asinh|linear`). Ver la decisión 2.
-- [ ] Nombres de los endpoints y si van versionados (`/api/v1/...`).
+- [x] Nombres de los endpoints: todos `/api/<cosa>`, **sin versionar**. Es lo que está implementado y probado, y a cuatro días de la entrega un prefijo `/api/v1/` solo agregaría trabajo. Si alguna vez hace falta romper el contrato, se versiona entonces.
 - [x] ~~Cómo se numeran las 102 bandas~~ → definido en `config/bands.yaml`: 1 a 102 por λ creciente, 17 por detector, espaciado **logarítmico** a R constante. Ojo: las bandas **se solapan** en las costuras entre detectores, así que `band` necesita el detector para ser único. Ver `docs/ciencia.md` 7.1 y 7.2.
 - [x] Paginación con `limit`/`offset` (decisión 5).
 - [x] La resta es un endpoint: `/api/diff`, con los pares de `/api/pairs` (decisiones 12 y 13).

@@ -48,9 +48,9 @@ Qué instala cada uno, con qué servicios habla y las trampas ya documentadas:
 
 ## Pendientes de equipo
 
-- [ ] **Fecha límite del hackathon.** Es el único bloqueo real abierto en la Bitácora: sin eso el roadmap por fases no se puede ajustar.
-- [ ] **Stack de la web** (tarea 1). Propuesta en el README: Python + FastAPI para el backend, JavaScript para el frontend. Sin confirmar.
-- [ ] **Nombre del proyecto** (tarea 1).
-- [ ] **`contracts/api.md` v1** con el OK de los tres (tarea 3).
+- [x] **Fecha límite del hackathon: 15 de noviembre de 2026.** Está en el README.
+- [x] **Stack confirmado** (tarea 1): `core/` y `backend/` en Python con FastAPI; `frontend/` en Vite + React + TypeScript. Detalle en `AGENTS.md`.
+- [x] **Nombre del proyecto: HackatonNASA** (tarea 1).
+- [x] **`contracts/api.md` v1** con el OK de los tres (tarea 3).
 - [x] Reparto de roles confirmado.
 - [x] Repo en GitHub con una rama por persona.
