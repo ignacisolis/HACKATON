@@ -1,8 +1,13 @@
 # Visor web de SPHEREx: el cielo en el tiempo
 
+> **🇬🇧 For the submission, read [`README.en.md`](README.en.md)** — the
+> judge-facing version in English, with the demo link and what we found in the
+> data. Este README es el documento de trabajo del equipo.
+
 > Proyecto para el **Hackathon NASA · SPHEREx**. Nombre del proyecto: **HackatonNASA**.
 > Estado: **Fase 1 (MVP) en curso.** Fecha límite del hackathon: **15 de noviembre de 2026**.
-> Stack: Python + FastAPI (backend y ciencia) · frontend web (por confirmar por B).
+> Stack: Python + FastAPI (backend y ciencia) · Vite + React + TypeScript (frontend).
+> Demo: https://hackaton-lufkey-w.vercel.app · Guion del pitch: [`docs/pitch.md`](docs/pitch.md)
 
 ---
 
