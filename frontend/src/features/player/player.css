@@ -1,0 +1,80 @@
+/* Reproductor. Solo variables de index.css. Prefijo .pl- para no chocar con otras áreas. */
+.pl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.pl-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.pl-head h2 { margin-bottom: 0; }
+.pl-count { font-size: 12px; }
+
+/* selectores */
+.pl-pickers { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; }
+.pl-field { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); min-width: 0; }
+.pl-field select { width: 100%; min-width: 0; text-overflow: ellipsis; }
+.pl-inline { flex-direction: row; align-items: center; gap: 6px; }
+.pl-inline select { width: auto; }
+.pl-hint { grid-column: 1 / -1; margin: 0; font-size: 11px; }
+@media (max-width: 520px) { .pl-pickers { grid-template-columns: minmax(0, 1fr); } }
+
+/* escenario */
+.pl-stage {
+  position: relative; width: min(100%, 480px); margin: 0 auto; cursor: crosshair;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+  user-select: none; -webkit-user-select: none; touch-action: manipulation;
+}
+.pl-img, .pl-mask {
+  display: block; width: 100%; height: auto;
+  /* un píxel de SPHEREx son 6.2″: suavizar inventaría detalle */
+  image-rendering: pixelated;
+}
+.pl-mask { position: absolute; inset: 0; height: 100%; pointer-events: none; opacity: .75; filter: url(#pl-mask-tint); }
+.pl-mask-flood { flood-color: var(--mask); }
+.pl-overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.pl-cross line { stroke: var(--accent-2); stroke-width: 2; stroke-linecap: round; }
+.pl-pick circle { fill: none; stroke: var(--accent); stroke-width: 2; stroke-dasharray: 4 3; }
+.pl-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.pl-waiting {
+  position: absolute; left: 8px; bottom: 8px; font-size: 11px; padding: 2px 8px; border-radius: 999px;
+  background: var(--surface-2); color: var(--muted); border: 1px solid var(--border);
+}
+
+/* etiqueta del cuadro */
+.pl-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; font-size: 12px; justify-content: center; }
+.pl-det { font-weight: 600; }
+.pl-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: center; font-size: 11px; }
+.pl-legend span::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 5px; vertical-align: -1px; border-radius: 2px; }
+.pl-key-cross::before { background: var(--accent-2); }
+.pl-key-pick::before { border: 2px dashed var(--accent); border-radius: 50% !important; box-sizing: border-box; }
+.pl-key-mask::before { background: var(--mask); }
+
+/* controles */
+.pl-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+.pl-play { min-width: 92px; }
+.pl-check { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+.pl-check input { padding: 0; margin: 0; accent-color: var(--accent); }
+@media (max-width: 420px) { .pl-play { min-width: 0; } .pl-play-text { display: none; } }
+
+/* línea de tiempo: el thumb nativo mide ~16 px, por eso las marcas tienen 8 px de margen a cada lado */
+.pl-timeline { position: relative; padding-bottom: 2px; }
+.pl-timeline input[type='range'] { width: 100%; margin: 0; padding: 0; border: 0; background: transparent; accent-color: var(--accent); }
+.pl-ticks, .pl-tick-labels { position: relative; margin: 0 8px; }
+.pl-ticks { height: 8px; }
+.pl-tick {
+  position: absolute; top: 0; width: 2px; height: 6px; margin-left: -1px; border-radius: 1px;
+  background: var(--border);
+}
+.pl-tick.is-loaded { background: var(--muted); }
+.pl-tick.is-error { background: transparent; outline: 1px solid var(--bad); }
+.pl-tick.q-suspect { background: var(--warn); }
+.pl-tick.q-bad { background: var(--bad); }
+.pl-tick.is-current { background: var(--accent); height: 8px; width: 3px; }
+.pl-tick-labels { height: 14px; font-size: 10px; color: var(--muted); }
+.pl-tick-labels span { position: absolute; top: 0; white-space: nowrap; }
+
+.pl-status { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 12px; font-size: 11px; }
+.pl-progress { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pl-progress progress { width: 120px; height: 6px; accent-color: var(--accent); }
+.notice.pl-progress { display: flex; }
+
+.pl-notices { display: flex; flex-direction: column; gap: 6px; }
+.pl-notices:empty { display: none; }
+.pl-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+
+@media (hover: none) { .pl-keys { display: none; } }

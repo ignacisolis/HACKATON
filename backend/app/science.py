@@ -148,8 +148,12 @@ def combine(points):
     return core.combine(points)
 
 
-def light_curve(points, band_um: float, tolerance_um: float):
-    return core.light_curve(points, band_um=band_um, tolerance_um=tolerance_um)
+def light_curve(points, band: int):
+    # core.light_curve filtra por numero de banda (1..102). Antes recibia
+    # band_um + tolerance_um, que era la firma del stub; Nacho la cambio al
+    # implementarla en la tarea 23, porque el numero de banda ya identifica
+    # el canal y evita mezclar longitudes de onda sin darse cuenta.
+    return core.light_curve(points, band=band)
 
 
 DEFAULT_APERTURE_PX = core.spectrum.DEFAULT_APERTURE_PX

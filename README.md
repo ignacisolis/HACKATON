@@ -46,7 +46,7 @@ El usuario ingresa las **coordenadas** (ascensión recta y declinación) de una 
 | **Epsilon Indi B** | Un par de enanas cafés que orbitan una estrella | Se ve la zona del sistema (ver nota sobre resolución en la sección 7) |
 | **WISE 0855** (08h55m10.831s, −07°14′42.53″) | Objeto muy frío y débil, con movimiento propio muy alto | Su desplazamiento en el tiempo |
 | **RW Aurigae** | Estrella variable | Cambio de brillo en el tiempo |
-| **R Draconis** | Estrella variable evolucionada | Cambio de brillo y espectro |
+| **R Draconis** | Estrella variable evolucionada | Cambio de brillo. **Saturado:** no admite fotometría, ver `docs/ciencia.md` 8.2 |
 
 ### 4.3 Consideraciones especiales (del enunciado)
 
@@ -337,9 +337,9 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 - [x] ~~Tabla de cobertura de los otros 3 objetivos~~ → hecho en la tarea 7: `config/coverage.yaml`. Los 4 objetivos tienen cobertura de los 6 detectores.
 - [x] ~~Significado de cada bit de `FLAGS`~~ → hecho en la tarea 8: `config/flags.yaml`, 23 bits del Explanatory Supplement. Quedan 9 bits sin documentar en la propia fuente.
 - [x] ~~Confirmar si algún rango de longitud de onda se solapa entre detectores~~ → **no se solapan**, se encadenan: 0.75–5.01 µm sin huecos, con costuras de ~0.02 µm. Ver `docs/ciencia.md` sección 3.4.
-- [ ] Probar la descarga y extracción de espectros con datos reales.
-- [x] Fecha límite del hackathon: 15 de noviembre de 2026.
-- [x] Nombre del proyecto: HackatonNASA.
+- [x] ~~Probar la descarga y extracción de espectros con datos reales~~ → hecho con 18 recortes de WISE 0855. Funciona donde el objeto domina (D5–D6); en el azul lo que se mide es una fuente mezclada. Ver `docs/ciencia.md` 7.3.
+- [x] Fecha límite del hackathon: **15 de noviembre de 2026**.
+- [x] Nombre del proyecto: **HackatonNASA**.
 - [ ] Stack del frontend (lo define B). Backend: Python + FastAPI.
 - [ ] Volcar el reparto de roles a `docs/EQUIPO.md` (los roles ya están confirmados: ver sección 8).
 
@@ -354,8 +354,9 @@ Detalle completo en [`core/README.md`](core/README.md) y [`docs/ciencia.md`](doc
 - [x] **Cobertura de los 4 objetivos** (`config/coverage.yaml`): observaciones, fechas, detectores y longitud de onda por detector.
 - [x] **`core/align.py`**: alineación por WCS con corrección de movimiento propio (tarea 21). 26 pruebas, incluido el criterio de aceptación y la contraprueba de que sin corregir no centra.
 - [x] Notebook de Fase 0 movido a `core/` (tarea 5).
-- [ ] `core/subtract.py` y `core/spectrum.py` (tareas 22 y 23). Las firmas están; `is_comparable()` ya valida.
-- [x] CI en GitHub Actions: 71 pruebas en cada push y PR.
+- [x] **`core/subtract.py`**: resta de cuadros comparables, apilado ponderado y detección de dipolo (tarea 22). 25 pruebas.
+- [x] **`core/spectrum.py`** y **`core/bands.py`**: espectros, las 102 bandas y curvas de luz (tarea 23). 34 pruebas. Verificado con 18 recortes reales de WISE 0855: a 4.96 µm el flujo reproduce la fotometría W2 publicada con 1 % de diferencia.
+- [x] CI en GitHub Actions: 130 pruebas en cada push y PR.
 - [ ] Todo lo demás del roadmap (Fases 1 a 6).
 
 > **Corrección:** las versiones anteriores de este README daban por hecho un

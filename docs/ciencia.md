@@ -3,8 +3,9 @@
 Lo que el resto del equipo necesita saber del lado científico, y de dónde sale
 cada número. Mantiene esta página el rol C (Nacho).
 
-Estado: **tareas 5, 6, 7, 8 y 21 cerradas.** Toda la Fase 0 del rol C está
-lista, más la alineación de la Fase 2.
+Estado: **tareas 5, 6, 7, 8, 21, 22 y 23 cerradas.** De la 27 está hecha la
+mitad científica (sección 8); los links permanentes esperan a que la web esté
+desplegada.
 
 ---
 
@@ -156,6 +157,12 @@ tiempo) y para el panel de espectros, es el objetivo que mejor va a lucir.
 > **Recomendación para el equipo:** armar la demo principal con **R Draconis**, no
 > con WISE 0855. WISE 0855 es el caso difícil y hay que resolverlo, pero no es el
 > que mejor muestra la herramienta.
+
+> ⚠️ **CORREGIDO en la sección 8.2.** Esta recomendación se hizo mirando solo la
+> cobertura, que son metadatos. Al abrir los archivos resultó que **R Dra está
+> saturado**: `BLOOM` y `HALO` dejan 0 píxeles usables en la apertura, así que no
+> se le puede medir fotometría ni espectro. Sigue siendo el mejor caso para el
+> **video**, pero la demo de variabilidad y espectros va con **RW Aurigae**.
 
 Una rareza que conviene revisar: en R Dra los detectores no están parejos. D1,
 D3, D4 y D6 tienen 565–584 observaciones, pero **D2 y D5 solo 89**. En los otros
@@ -461,7 +468,355 @@ significa que para medir el movimiento propio de WISE 0855 en serio —que son
 1.35 px en toda la ventana— hace falta restar fondo y ajustar una PSF. Eso es
 parte de la tarea 23, y conviene no prometer precisión sub-píxel antes.
 
-## 6. Cómo reproducir todo esto
+## 6. Resta y apilado (tarea 22)
+
+`core.subtract_frames()` y `core.subtract_aligned()` restan dos cuadros
+comparables; `core.coadd()` apila visitas repetidas; `core.dipole_snr()` mide el
+dipolo que deja un objeto en movimiento.
+
+### 6.1 Hay dos formas de alinear y eligen qué se ve
+
+No son dos maneras de hacer lo mismo:
+
+| Alineado sobre | Qué queda fijo | Para qué sirve |
+|---|---|---|
+| el **objetivo** (`target_key=...`) | el objetivo | apilar, fotometría, espectros |
+| el **cielo** (`ra=`, `dec=`) | el fondo | **restar** y ver movimiento propio |
+
+Si se resta un cubo alineado sobre el objetivo, el objetivo se cancela y el
+movimiento **no se ve**: la resta queda vacía, que parece un resultado correcto.
+Es el mismo patrón de fallo silencioso que las coordenadas de 2010 y la máscara
+`SOURCE`. Por eso el cubo lleva `aligned_on` y `subtract_aligned()` se niega,
+explicando qué hacer, salvo que se pase `warn_if_target_aligned=False`.
+
+### 6.2 El hallazgo con datos reales: casi nada es comparable
+
+Bajé **6 recortes reales** de R Dra del detector D2 y medí la longitud de onda
+en la posición del objetivo, de `WCS-WAVE`:
+
+| # | MJD | λ (µm) | ancho (µm) |
+|---|---|---|---|
+| 0 | 60834.7884 | 1.4017 | 0.0336 |
+| 1 | 60834.7899 | 1.4359 | 0.0347 |
+| 2 | 60834.7914 | 1.4706 | 0.0357 |
+| 3 | 60834.7929 | 1.5067 | 0.0368 |
+| 4 | 60835.5358 | 1.5431 | 0.0376 |
+| 5 | 60835.5373 | 1.5806 | 0.0383 |
+
+**0 de 15 pares resultaron comparables.**
+
+Y la razón es estructural, no un problema de la tolerancia: cada exposición
+consecutiva se corre ~0.035 µm, que es **casi exactamente un ancho de banda**.
+SPHEREx va cambiando de canal espectral entre exposiciones; así construye las
+102 bandas. O sea: **seis exposiciones seguidas dan seis bandas distintas, no
+seis medidas de una banda.**
+
+De paso, esto **confirma empíricamente los 17 canales por detector**, que hasta
+ahora venían de las notas de Fase 0: D2 cubre 1.10–1.65 µm = 0.55 µm, y
+0.55 / 0.035 ≈ 16.
+
+**Lo que implica para la consideración C5 y para el backend:** los pares
+comparables hay que buscarlos **en todo el archivo**, no entre exposiciones
+vecinas. De las 89 observaciones de D2 sobre R Dra, las que caen en el mismo
+canal son ~5 (sección 3.3). Conviene que `/api/frames` exponga el **canal** de
+cada cuadro, no solo el detector y la λ, para que el frontend pueda ofrecer
+pares válidos en vez de dejar que el usuario elija dos cualesquiera y reciba un
+error.
+
+### 6.3 Qué cuenta como "se movió", medido
+
+`dipole_snr()` pide tres cosas, y la tercera salió de medirla:
+
+1. Los **dos** lóbulos sobre el umbral. Un pico positivo solo puede ser un rayo
+   cósmico o un cambio de brillo.
+2. Separación mayor que cero.
+3. Los dos lóbulos **juntos**, a menos de 4 px.
+
+El punto 3 no es un número elegido a dedo. Con el desplazamiento real de WISE
+0855 los lóbulos quedan a **2.0 px**; en un par **sin** movimiento aparecían dos
+picos de 3.5 y 6.2 sigma pero a **8.1 px**, en esquinas opuestas de la caja. Sin
+el límite de separación, eso pasaba por detección. Una fuente puntual desplazada
+deja el positivo y el negativo pegados; dos picos lejanos son dos cosas
+distintas.
+
+### 6.4 Limitación: no se igualan las PSF
+
+La resta es directa. Si los dos cuadros se remuestrearon con corrimientos
+distintos, uno queda más suavizado que el otro y la diferencia deja residuos
+alrededor de **todas** las fuentes del campo. Medido en el par sin movimiento:
+hasta **6 sigma**.
+
+Por eso `detected` significa "hay algo con forma de dipolo acá", no "este objeto
+se movió con certeza". Para una medición publicable hay que convolucionar los dos
+cuadros a una PSF común, y para eso está la extensión `PSF` de los FITS — la
+misma que la caché descarta por peso, así que habría que traerla aparte. Queda
+para la tarea 27.
+
+La prueba `test_la_resta_sin_igualar_psf_deja_residuos` fija esa limitación: si
+algún día falla, es buena noticia, y entonces se puede endurecer `dipole_snr`.
+
+### 6.5 Un sesgo en la longitud de onda que conviene saber
+
+`WCS-WAVE` trae los coeficientes SIP espaciales pero su `CTYPE` es `WAVE-TAB`,
+y astropy avisa que **aplica el SIP igual**. Medí cuánto cambia: **0.003 µm**,
+un 9 % del ancho de banda.
+
+No alcanza para cambiar si dos cuadros son comparables (el umbral son 0.017 µm),
+así que la tarea 22 no se ve afectada. Pero son 3 nm de sesgo sistemático cuando
+IRSA documenta `WCS-WAVE` como una aproximación de ~1 nm. Para el visor alcanza;
+para un número publicable hay que usar el producto **Spectral WCS** (`CWAVE` y
+`CBAND`), como recomienda IRSA. Importa para la tarea 23.
+
+## 7. Espectros (tarea 23)
+
+`core.extract_spectrum()` saca un punto por exposición, `core.combine()` los
+promedia por banda y `core.light_curve()` da flujo contra tiempo.
+`core.bands` tiene las 102 bandas.
+
+### 7.1 Las 102 bandas: espaciado logarítmico, no lineal
+
+[`config/bands.yaml`](../config/bands.yaml) define las 102 bandas (6 detectores
+por 17 canales), numeradas de 1 a 102 por longitud de onda creciente. Eso
+**responde la pregunta abierta** de `contracts/api.md` sobre cómo se numeran.
+
+El espaciado **no es lineal**: SPHEREx es un espectrómetro de poder resolvente
+constante, así que el ancho de banda crece con la longitud de onda. Se deduce de
+medir 6 exposiciones reales consecutivas de D2 sobre R Dra:
+
+| λ (µm) | ancho (µm) | λ/ancho |
+|---|---|---|
+| 1.4017 | 0.0336 | 41.7 |
+| 1.5806 | 0.0383 | 41.3 |
+
+λ/ancho es constante e igual al `energy_resolvingpower` que publica IRSA para D2
+(41.4). Y el cociente entre longitudes de onda consecutivas también es
+constante, 1.0244 = 1 + 1/41.4. Por eso el centro de cada banda es el centro
+**geométrico**, no el aritmético.
+
+Validación independiente: esas 6 exposiciones caen en las bandas **28, 29, 30,
+31, 32 y 33** — consecutivas, una por canal. Si la grilla estuviera mal
+espaciada, no pasaría. Queda fijado en
+[`core/test_spectrum.py`](../core/test_spectrum.py).
+
+### 7.2 Las bandas se solapan en las costuras, y son SEIS pares
+
+Una longitud de onda sola **no determina la banda**: los detectores se solapan un
+poco, así que en las costuras la misma λ cae en dos bandas, una por detector. Y
+eso es físicamente correcto, porque los dos detectores pueden medirla.
+
+| Bandas | Detectores | Solape (µm) |
+|---|---|---|
+| 17 ↔ 18 | D1/D2 | 1.1033–1.1167 |
+| 34 ↔ 35 | D2/D3 | 1.6301–1.6499 |
+| 51 ↔ 52 | D3/D4 | 2.4027–2.4346 |
+| 68 ↔ 69 | D4/D5 | 3.8113–3.8473 |
+| **68 ↔ 70** | **D4/D5** | 3.8452–3.8473 |
+| 85 ↔ 86 | D5/D6 | 4.4115–4.4300 |
+
+Hay 5 costuras pero **6 pares**. El par extra está en D4/D5, donde R salta de
+34.9 a 111.6: las bandas de D4 son unas 3 veces más anchas, y la última de D4
+alcanza a cubrir **dos** bandas de D5. Es consecuencia directa del salto de R
+(sección 3.5).
+
+Por eso `band_of_wavelength()` pide el detector, y `extract()` siempre lo pasa.
+**Para Bruno:** el selector de banda no debería ofrecer "1.11 µm" sin decir el
+detector, porque son dos bandas distintas.
+
+### 7.3 El espectro real de WISE 0855, contrastado con fotometría publicada
+
+Bajé **18 recortes reales** (3 por detector, ~90 MB) y saqué el espectro con
+`core/check_real_spectrum.py`. Salió un espectro de **17 bandas de las 102**, con
+SNR de 13.5 a 1.7, y todos los puntos marcados `ok`.
+
+Pero un espectro que corre no es un espectro correcto. Lo contrasté con la
+fotometría WISE publicada del objeto (W1 ≈ 17.8 mag a 3.4 µm y W2 ≈ 13.9 a
+4.6 µm, o sea 23 y 473 µJy):
+
+| λ (µm) | medido (µJy) | medido / esperado |
+|---|---|---|
+| 0.99–1.04 | 900–1090 | **38–47x** |
+| 1.51–1.59 | 750–830 | **32–35x** |
+| 2.21–2.41 | 410–440 | **18–19x** |
+| 3.35–3.54 | 87–275 | 3.7–12x |
+| 4.29–4.36 | 540–890 | 1.1–1.9x |
+| **4.85–5.00** | **467–668** | **0.99–1.41x** |
+
+**La conclusión es doble, y las dos mitades importan.**
+
+**Funciona donde el objeto domina.** A 4.96 µm el flujo medido reproduce la
+fotometría W2 conocida con un **1 % de diferencia**, y en todo D5–D6 queda dentro
+de un factor 1.9. Para fotometría de apertura sin ajuste de PSF, es buen acuerdo.
+La cadena completa — propagar movimiento propio, ubicar el objetivo con el WCS,
+enmascarar con los bits correctos, leer λ de `WCS-WAVE`, integrar apertura y
+convertir a Jy — da el número bien.
+
+**No sirve en el azul.** 38–47 veces el flujo posible para una enana Y es
+imposible: WISE 0855 es prácticamente invisible por debajo de 3 µm. Lo que se
+está midiendo ahí es **otra fuente mezclada dentro de la apertura**.
+
+### 7.4 El problema es la mezcla, y es el del enunciado
+
+Una apertura de 2.5 px son **15.5 arcsec de radio**. A esa escala, una posición
+cualquiera del cielo suele tener alguna fuente débil adentro. Y como WISE 0855 no
+aporta casi nada en el azul, lo que queda es el contaminante.
+
+Es exactamente el problema que nombra el enunciado: los objetos "a menudo se
+superponen". Haberlo visto con datos propios y poder cuantificarlo es más útil
+para el pitch que repetirlo del enunciado.
+
+Dos cosas que probé y **no** lo arreglan, para que nadie las reintente:
+
+- **Restar `ZODI` no cambia nada** (diferencias en el cuarto dígito). No porque el
+  modelo esté mal, sino porque el anillo de fondo ya quita lo que es suave: la luz
+  zodiacal es lisa en la escala del recorte. El exceso está **localizado** en la
+  posición del objetivo, y por eso el anillo no lo toca.
+- **Bajar el radio de apertura tampoco.** Con r = 1.0–1.5 px quedan 3 a 7 píxeles
+  y los resultados se dispersan sin sentido, con flujos incluso negativos: se
+  pierde PSF y el fondo pesa demasiado. r = 2.5 px es el único que da resultados
+  estables, y es el radio que usa el propio pipeline de Level 3.
+
+Lo que sí lo arreglaría es **ajustar una PSF** en vez de sumar apertura, que es
+justo lo que hace el pipeline de IRSA con Tractor. Para eso hay que traer la
+extensión `PSF`, la misma que la caché descarta por peso (~4.9 MB sin recortar).
+Queda anotado para la tarea 27.
+
+**Para el frontend:** el panel de espectro debería mostrar siempre la barra de
+error y el radio de apertura, y no presentar el espectro de un objeto débil como
+si fuera suyo sin más. Un aviso del tipo "apertura de 15.5 arcsec, puede incluir
+fuentes vecinas" es honesto y barato.
+
+### 7.5 La consideración C8, con un número
+
+De las 17 bandas cubiertas, **una** tuvo 2 épocas, y combinar dio la mejora
+esperada de **x1.41**, que es la raíz de 2. El resto tuvo una sola época, por lo
+mismo de la sección 6.2: con 3 recortes por detector, cada exposición cae en un
+canal distinto.
+
+Para ver la mejora de C8 en serio hay que bajar muchas más épocas por banda.
+R Dra es el caso donde se puede: ~34 por banda en D1, D3, D4 y D6, o sea x5.8.
+
+### 7.6 Un dato de operación para el backend
+
+IRSA devolvió **HTTP 503** tras 15 descargas de recortes seguidas. No es
+permanente, pero hay que esperar: `core/check_real_spectrum.py` reintenta con
+espera creciente (2, 4, 8, 16 s). **El backend va a chocar con lo mismo** al
+precalcular los 4 objetivos (tarea 26), así que conviene que tenga reintentos
+desde el principio y no descubra el 503 en la demo.
+
+## 8. Validación de los 4 objetivos (tarea 27, mitad científica)
+
+La tarea 27 pide dos cosas: validar los 4 casos y dejar un link permanente por
+objeto. Los links dependen de que la web esté desplegada (tareas 13 y 16, sin
+empezar). Esto es la otra mitad: comprobar con recortes **reales** que lo que el
+enunciado pide de cada objetivo se puede demostrar con `core/`.
+
+Se corre con `python core/validate_targets.py`. Usa red y baja ~250 MB.
+
+### 8.1 El veredicto
+
+| Objetivo | Espectro | Serie temporal | Movimiento | Veredicto |
+|---|---|---|---|---|
+| **RW Aurigae A** | 6/6 detectores, 1.07–4.94 µm, SNR 371 | 8 épocas, 372 días, **varía 7.6×**, χ² = 69168 | despreciable | **el mejor caso** |
+| **WISE 0855** | 6/6 detectores, 0.99–4.96 µm, SNR 6.6 | compatible con constante (χ² = 1.6) ✓ correcto | 1.34 px, par del mismo canal encontrado, **sin detección** | parcial |
+| **Epsilon Indi B** | 6/6 detectores, 0.75–4.42 µm, SNR 94 | "varía 4×" — es **color**, no variabilidad | 1.09 px, sin par comparable | parcial |
+| **R Draconis** | 4/6 detectores | **falla: 0 píxeles usables** | despreciable | **saturado** |
+
+### 8.2 Me equivoqué con R Draconis: está saturado
+
+En la sección 3.1 recomendé R Dra como el mejor caso para la demo, por su
+cobertura: 2483 observaciones en 222 fechas, diez veces más que cualquier otro.
+**Esa recomendación estaba mal**, y la corrijo acá.
+
+Recomendé por cobertura sin comprobar si la fotometría sirve. No sirve. En 6 de
+los 8 recortes de la serie quedan **0 de ~20 píxeles usables** en la apertura, y
+los flags que dominan lo explican:
+
+```
+SOURCE, TRANSIENT, SUR_ERROR, BLOOM, HALO
+```
+
+`BLOOM` y `HALO` son derrame de carga y halo de una fuente brillante, y
+`TRANSIENT` también se dispara por el derrame de una vecina saturada (lo dice la
+nota del bit 0 en `config/flags.yaml`). O sea: **R Dra es demasiado brillante
+para SPHEREx.** Es una Mira con K ≈ 0 mag, y SPHEREx está diseñado para fuentes
+débiles. Satura y embadurna su entorno.
+
+Consecuencia práctica: R Dra sigue siendo **excelente para el video** — 222
+fechas de imágenes donde se ve el objeto cambiar — pero **no se le puede medir
+fotometría ni espectro** con apertura. Para el panel de espectros no es el caso
+a mostrar.
+
+Es un buen ejemplo de por qué la tarea 27 existe: la cobertura se mide con
+metadatos, pero que el dato sirva solo se sabe abriendo los archivos.
+
+### 8.3 RW Aurigae es el mejor caso para la demo
+
+Es el que cumple su parte del enunciado sin peros:
+
+- **6 de 6 detectores**, de 1.07 a 4.94 µm, con SNR mediana de **371**.
+- **8 épocas en 372 días**, con el flujo variando un factor **7.6**.
+- χ² contra brillo constante de **69168**. Aun descontando que parte de la
+  dispersión es color (cada época cae en otro canal), esa cifra no es ruido.
+- Movimiento propio despreciable, así que no hay que explicar nada raro.
+
+Es una T Tauri con variabilidad irregular grande y bien documentada, así que lo
+medido es consistente con lo que se sabe del objeto.
+
+> **Recomendación revisada para el equipo:** la demo de **variabilidad y
+> espectros** va con **RW Aurigae**. La de **video con muchas épocas** va con
+> **R Draconis**. WISE 0855 es el caso difícil que hay que resolver, no el que
+> mejor luce.
+
+### 8.4 El movimiento de WISE 0855: el par existe, la señal no
+
+Encontré un par **realmente comparable**: banda 33, **2025-05-06 y 2026-05-14**,
+373 días de separación y Δλ = **0.0002 µm**. La maquinaria funciona: encuentra el
+par, alinea al cielo y resta.
+
+Pero el dipolo **no se detecta**. Los lóbulos dan 3.8 y 1.2 sigma en una caja de
+4 px, y en el mapa de SNR alrededor del objetivo no hay estructura de dipolo.
+
+La razón no es el método, es el objeto: a 1.59 µm **WISE 0855 no está detectado**.
+Es lo mismo de la sección 7.3 — por debajo de 3 µm lo que se mide es una fuente
+mezclada, no la enana. Si el objeto no aparece, no hay nada que se mueva.
+
+**Lo que hay que hacer para la demo de O4:** buscar un par del mismo canal, a un
+año de distancia, en **D5 o D6** (4.3–5.0 µm), que es donde el objeto domina y
+reproduce su fotometría W2. Ahí sí debería haber señal que se desplace.
+
+### 8.5 Un problema operativo: el canal no está en los metadatos
+
+Para restar hacen falta dos épocas del mismo canal. Y hay un obstáculo que no
+esperaba: **el canal no se puede saber desde el TAP de IRSA.**
+`energy_bandpassname` da el detector, y `energy_bounds_lower/upper` dan el rango
+del detector entero, no el del canal. La λ en la posición del objetivo sale de
+`WCS-WAVE`, o sea **hay que abrir el FITS**.
+
+Medido: de 10 exposiciones de D2 sobre WISE 0855 elegidas en fechas repartidas,
+solo **4 de 45 pares** resultaron comparables, y de esos uno solo estaba a más de
+un día de distancia.
+
+**Para Camilo:** la caché compacta tiene que guardar la **λ en el objetivo** de
+cada exposición, no solo el detector. Si no, encontrar un par restable obliga a
+volver a bajar los recortes cada vez. Es un argumento más de que la caché no es
+una optimización opcional.
+
+### 8.6 Los objetos brillantes no tienen fondo estimable
+
+En eps Ind B, RW Aur y R Dra, **todos** los puntos salieron marcados `suspect`,
+siempre por lo mismo: el anillo de fondo no tiene píxeles limpios, porque el
+recorte entero está dentro de una máscara `SOURCE`. Es lo mismo que pasó con
+R Dra en la sección 4.6.
+
+`extract()` no inventa un cero: deja `background = None` y marca el punto. Está
+bien que avise, pero significa que **los flujos de los objetos brillantes
+incluyen cielo** y salen varias veces por encima de lo real. Para eps Ind B
+medimos 11–44 mJy donde se esperan ~2.
+
+Para arreglarlo hay que estimar el fondo de un recorte más grande que la máscara
+de fuentes, o usar el modelo `ZODI` más un término local. Queda anotado.
+
+## 9. Cómo reproducir todo esto
 
 ```bash
 pip install -r requirements.txt
@@ -472,4 +827,9 @@ python core/fetch_coverage.py     # regenera config/coverage.yaml desde IRSA
 python core/test_targets.py       # 10 pruebas, incluida la de la época
 python core/test_flags.py         # 35 pruebas de bits y máscaras
 python core/test_align.py         # 26 pruebas de alineación
+python core/test_subtract.py      # 25 pruebas de resta y apilado
+python core/test_spectrum.py      # 34 pruebas de bandas y espectros
+python core/bands.py              # la tabla de las 102 bandas
+python core/check_real_spectrum.py  # espectro real (usa red, ~90 MB)
+python core/validate_targets.py     # valida los 4 objetivos (usa red, ~250 MB)
 ```

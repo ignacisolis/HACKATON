@@ -27,8 +27,14 @@ cuando hay que actualizar el catálogo.
 | `datatypes.py` | `Frame`, `AlignedCube`, `SpectrumPoint`: la frontera con `backend/` | listo |
 | `align.py` | Alineación por WCS con movimiento propio (tarea 21) | **listo** |
 | `test_align.py` | 26 pruebas, incluido el criterio de aceptación | pasan |
-| `subtract.py` | Resta de imágenes comparables (tarea 22) | firmas, valida ya |
-| `spectrum.py` | Extracción y combinación de espectros (tarea 23) | firmas |
+| `subtract.py` | Resta, apilado y detección de dipolo (tarea 22) | **listo** |
+| `test_subtract.py` | 25 pruebas, incluido el criterio de aceptación | pasan |
+| `spectrum.py` | Extracción y combinación de espectros (tarea 23) | **listo** |
+| `bands.py` | Las 102 bandas, para el selector (C2, C3) | listo |
+| `make_bands.py` | Genera `config/bands.yaml` | listo |
+| `check_real_spectrum.py` | Verifica el espectro con datos reales (usa red) | listo |
+| `validate_targets.py` | Valida los 4 objetivos con datos reales (usa red) | listo |
+| `test_spectrum.py` | 34 pruebas de bandas y espectros | pasan |
 
 El notebook de exploración de la Fase 0 está en
 [`fase0_spherex_explorar_fits.ipynb`](fase0_spherex_explorar_fits.ipynb), en esta
@@ -121,6 +127,8 @@ python core/fetch_targets.py --dry-run    # solo muestra qué quedaría
 python core/test_targets.py     # 10 pruebas de astrometría
 python core/test_flags.py       # 35 pruebas de FLAGS
 python core/test_align.py       # 26 pruebas de alineación
+python core/test_subtract.py    # 25 pruebas de resta
+python core/test_spectrum.py    # 34 pruebas de bandas y espectros
 ```
 
 O con pytest, si está instalado: `pytest core/`.

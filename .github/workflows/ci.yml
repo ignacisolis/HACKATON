@@ -57,6 +57,18 @@ jobs:
         # NO queda centrado.
         run: python core/test_align.py
 
+      - name: Pruebas de resta y apilado
+        # Incluye el criterio de aceptacion de la tarea 22: el movimiento de
+        # WISE 0855 se ve en la resta, con su desplazamiento real de 1.35 px.
+        run: python core/test_subtract.py
+
+      - name: Pruebas de bandas y espectros
+        run: python core/test_spectrum.py
+
+      - name: config/bands.yaml esta al dia
+        # Se genera de los rangos por detector; si cambian, regenerarlo.
+        run: python core/make_bands.py --check
+
       - name: Los YAML de config parsean y tienen lo que deben
         run: |
           python - <<'PY'
@@ -136,7 +148,14 @@ jobs:
           python - <<'PY'
           import pathlib, re, sys
 
-          permitidos = {"fetch_targets.py", "fetch_coverage.py"}
+          # Los scripts de mantenimiento SI pueden hablar con el mundo: se
+          # corren a mano, no son parte de la ruta de ejecucion de la web.
+          # Agregar aca solo eso, nunca un modulo que el backend importe.
+          permitidos = {
+              "fetch_targets.py",        # SIMBAD  -> config/targets.yaml
+              "fetch_coverage.py",       # IRSA    -> config/coverage.yaml
+              "check_real_spectrum.py",  # IRSA    -> verificacion con datos reales
+          }
           patron = re.compile(r"\b(urllib\.request|socket|requests|httpx)\b")
           malos = []
           for p in sorted(pathlib.Path("core").glob("*.py")):

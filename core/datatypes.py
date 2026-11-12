@@ -68,6 +68,14 @@ class AlignedCube:
     detectors: list            # (n_frames,) 'D1'..'D6'
     wavelengths_um: np.ndarray  # 1D (n_frames,) lambda en el objetivo
     shifts_px: np.ndarray      # 2D (n_frames, 2) corrimiento aplicado a cada cuadro
+    # Ancho de banda de cada cuadro. Hace falta para decidir que cuadros son
+    # comparables sin volver a los Frame de origen: la tolerancia de la resta es
+    # una fraccion del ancho de banda, no un numero fijo.
+    bandwidths_um: np.ndarray = None
+    # Como se alineo el cubo. Cambia por completo lo que significa una resta:
+    #   'target'  el objetivo esta fijo y el fondo se mueve  -> para apilar
+    #   'sky'     el fondo esta fijo y el objetivo se mueve   -> para restar
+    aligned_on: str = "target"
     dropped: list = field(default_factory=list)  # cuadros descartados y por que
 
     def __len__(self):
@@ -80,10 +88,20 @@ class SpectrumPoint:
 
     wavelength_um: float
     bandwidth_um: float
-    flux: float                # MJy/sr, o Jy si se integra apertura
+    flux: float                # flujo integrado en la apertura
     flux_err: float
     mjd: float
     detector: str
     n_pixels: int              # pixeles que entraron en la apertura
     flagged_fraction: float    # cuantos de la apertura estaban enmascarados
     quality: str = "ok"        # 'ok' | 'suspect' | 'bad'
+    unit: str = "Jy"           # unidad de flux y flux_err
+    # Numero de banda de 1 a 102, de core.bands. None si cae fuera de la grilla.
+    band: int = None
+    # Fondo restado, en MJy/sr. None cuando el anillo no tenia pixeles limpios
+    # suficientes: en ese caso NO se resto nada y quality queda 'suspect', en
+    # vez de inventar un cero.
+    background: float = None
+    surface_brightness: float = None   # media en la apertura, MJy/sr
+    # Cuantas epocas se combinaron. 1 en un punto crudo; mas en uno de combine().
+    n_epochs: int = 1

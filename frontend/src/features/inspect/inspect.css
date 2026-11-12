@@ -1,0 +1,105 @@
+/* Panel de inspección. Solo variables de index.css. Prefijo ins- para no chocar con otras áreas. */
+.ins { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ins p { margin: 0; }
+.ins-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; }
+.ins-head h2 { margin-bottom: 0; flex: none; }
+.ins-frame { font-size: 11px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* pestañas */
+.ins-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.ins-tab {
+  flex: 1 1 0; min-width: 0; background: transparent; border: 0; border-bottom: 2px solid transparent;
+  border-radius: 0; padding: 8px 4px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ins-tab[aria-selected='true'] { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+.ins-tab:hover:not(:disabled) { color: var(--text); border-color: transparent; border-bottom-color: var(--border); }
+.ins-tab[aria-selected='true']:hover { border-bottom-color: var(--accent); }
+.ins-panel { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.ins-panel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.ins-panel > div { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.ins-meta, .ins-masks, .ins-diff { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+.ins-stale { opacity: .55; transition: opacity .15s; }
+.ins-lead { font-size: 13px; }
+.ins-hint { display: block; font-size: 11px; color: var(--muted); overflow-wrap: anywhere; }
+.ins-alarm { font-weight: 600; }
+.ins-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.ins-actions button[aria-pressed='true'] { border-color: var(--accent); color: var(--accent); }
+
+/* metadata */
+.ins-quality {
+  padding: 8px 10px; border-radius: 8px; background: var(--surface-2); border-left: 3px solid var(--muted);
+  display: flex; flex-direction: column; gap: 4px; font-size: 12px;
+}
+.ins-quality.q-ok { border-left-color: var(--ok); }
+.ins-quality.q-suspect { border-left-color: var(--warn); }
+.ins-quality.q-bad { border-left-color: var(--bad); }
+.ins-quality-head { display: flex; align-items: center; gap: 8px; }
+.ins-quality ul { margin: 0; padding-left: 18px; }
+
+.ins-dl { display: grid; grid-template-columns: minmax(0, 10.5em) minmax(0, 1fr); gap: 5px 10px; margin: 0; font-size: 13px; }
+.ins-dl dt { color: var(--muted); font-size: 12px; padding-top: 1px; }
+.ins-dl dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ins-det { font-weight: 700; font-family: var(--mono); }
+
+/* máscaras */
+.ins-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 12px; }
+.ins-table col.c-bit { width: 2.6em; }
+.ins-table col.c-px { width: 4.4em; }
+.ins-table col.c-px-full { width: 6.5em; }
+.ins-table col.c-pct { width: 4.6em; }
+.ins-table th, .ins-table td { padding: 5px 4px; border-bottom: 1px solid var(--border); vertical-align: top; text-align: left; }
+.ins-table thead th { color: var(--muted); font-weight: 500; font-size: 11px; }
+.ins-table .num { text-align: right; white-space: nowrap; }
+.ins-group th { background: var(--surface-2); font-weight: 600; padding: 6px; }
+.ins-group.g-photometry th { border-left: 3px solid var(--bad); }
+.ins-group.g-contamination th { border-left: 3px solid var(--warn); }
+.ins-group.g-info th { border-left: 3px solid var(--accent); }
+.ins-group.g-unknown th { border-left: 3px solid var(--mask); }
+.ins-group .ins-hint { font-weight: 400; margin-top: 2px; }
+.ins-table tr.on td { background: color-mix(in srgb, var(--mask) 12%, transparent); }
+.ins-table tr.on .ins-name { color: var(--mask); }
+.ins-layer { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
+.ins-layer input { flex: none; width: 16px; height: 16px; margin: 1px 0 0; padding: 0; accent-color: var(--mask); cursor: pointer; }
+.ins-layer input:disabled { cursor: not-allowed; }
+.ins-layer label { min-width: 0; cursor: pointer; }
+.ins-name { font-weight: 600; overflow-wrap: anywhere; }
+.ins-tag { margin-left: 4px; font-size: 10px; padding: 0 5px; vertical-align: 1px; }
+.ins-desc { display: block; color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+
+.ins-full summary, .ins-how summary { cursor: pointer; font-size: 12px; color: var(--muted); padding: 4px 0; }
+.ins-full[open] summary, .ins-how[open] summary { color: var(--text); }
+.ins-full > .notice { margin: 6px 0; }
+.ins-how p { font-size: 12px; margin-top: 4px; }
+
+/* resta */
+.ins-ab { font-size: 12px; }
+.ins-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ins-field label { font-size: 12px; color: var(--muted); }
+.ins-select { width: 100%; min-width: 0; max-width: 100%; text-overflow: ellipsis; }
+.ins-cmp.likely { color: var(--ok); }
+.ins-cmp.unlikely { color: var(--warn); }
+.ins-suggest { align-self: flex-start; font-size: 12px; }
+
+.ins-side { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.ins-fig { margin: 0; min-width: 0; }
+.ins-fig figcaption { text-align: center; font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
+.ins-img { position: relative; width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.ins-img img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.ins-img-error, .ins-img-empty { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; font-size: 11px; padding: 6px; text-align: center; }
+
+.ins-mark {
+  position: absolute; width: max(10px, 9%); aspect-ratio: 1; border-radius: 50%; transform: translate(-50%, -50%);
+  border: 2px solid var(--accent-2); box-shadow: 0 0 0 1px var(--bg); pointer-events: none;
+}
+.ins-mark.b { border-style: dashed; border-color: var(--accent); }
+.ins-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 11px; color: var(--muted); }
+.ins-legend .ins-mark { position: static; display: inline-block; width: 11px; transform: none; vertical-align: -1px; }
+
+@media (max-width: 420px) {
+  .ins-dl { grid-template-columns: minmax(0, 1fr); gap: 1px 0; }
+  .ins-dl dd { margin-bottom: 6px; }
+  .ins-table col.c-bit { width: 2.2em; }
+  .ins-table col.c-px { width: 3.9em; }
+  .ins-table col.c-pct { width: 4.2em; }
+}

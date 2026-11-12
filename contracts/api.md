@@ -202,8 +202,15 @@ Camilo puede escribir contra esto hoy.
 | `core.align_frames(frames, target_key=...)` | ✅ **funciona** | `AlignedCube` |
 | `core.target_pixel(frame, target_key=...)` | ✅ funciona | `(x, y)` dónde cae el objetivo |
 | `core.shift_series(frames, target_key=...)` | ✅ funciona | corrimientos sin remuestrear |
-| `core.subtract_frames(a, b)` | firma, **valida ya** | `(diff, var, usable)` |
-| `core.extract_spectrum(frames, target_key=...)` | firma | lista de `SpectrumPoint` |
+| `core.subtract_frames(a, b)` | ✅ **funciona** | `(diff, var, usable)` |
+| `core.subtract_aligned(cube, i, j)` | ✅ funciona | resta dos cuadros del cubo |
+| `core.coadd(cube)` | ✅ funciona | `(img, var, n_eff)` apilado ponderado |
+| `core.dipole_snr(diff, var)` | ✅ funciona | mide el movimiento (O4) |
+| `core.extract_spectrum(frames, target_key=...)` | ✅ **funciona** | lista de `SpectrumPoint` |
+| `core.combine(points)` | ✅ funciona | un punto por banda, con `n_epochs` |
+| `core.light_curve(points, band=)` | ✅ funciona | `(mjds, flujos, errores)` |
+| `core.band_of_wavelength(lam, det)` | ✅ funciona | banda 1..102 |
+| `core.band_info(band)` | ✅ funciona | λ, ancho, detector, canal |
 
 > **Ojo con los nombres.** El Tablero los llama `core.align()`, `core.subtract()`
 > y `core.spectrum()`, pero esos son los nombres de los **módulos**. Exponer
@@ -250,6 +257,6 @@ Implementado en la rama `back` y probado con datos reales. Cada punto tiene un t
 
 - [x] PNG ya estirado (`stretch=asinh|linear`). Ver la decisión 2.
 - [ ] Nombres de los endpoints y si van versionados (`/api/v1/...`).
-- [ ] Cómo se numeran las 102 bandas. Acá se asume `band` de 1 a 102 ordenadas por λ creciente, pero hay que confirmar que coincida con la convención de la misión.
+- [x] ~~Cómo se numeran las 102 bandas~~ → definido en `config/bands.yaml`: 1 a 102 por λ creciente, 17 por detector, espaciado **logarítmico** a R constante. Ojo: las bandas **se solapan** en las costuras entre detectores, así que `band` necesita el detector para ser único. Ver `docs/ciencia.md` 7.1 y 7.2.
 - [x] Paginación con `limit`/`offset` (decisión 5).
 - [ ] Si `/api/subtract` es un endpoint o lo hace el frontend con dos cuadros.
