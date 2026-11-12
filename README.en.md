@@ -10,12 +10,18 @@ and read a spectrum.
 
 **Live demo:** https://hackaton-lufkey-w.vercel.app
 
-> ⚠️ **Read this before judging the demo.** The public site currently serves the
-> **example fixtures** in `contracts/fixtures/`, not live SPHEREx observations.
-> The science core and the API both work against real data — this README shows
-> measurements taken from real cutouts — but the backend service is not hosted
-> yet, so the deployed front end falls back to sample data. Everything is
-> reproducible locally against real IRSA data with the commands below.
+**API:** https://spherex-api.onrender.com/api/health
+
+> ⚠️ **The API is live; the deployed front end is one build behind.** The API
+> above serves real SPHEREx data, and the site is configured to use it — but the
+> currently published bundle still ships the sample fixtures from
+> `contracts/fixtures/` until the next deploy picks that configuration up.
+>
+> Every measurement quoted in this README comes from **real IRSA cutouts** and is
+> reproducible with the commands below.
+>
+> *Render puts free services to sleep. If the API link is slow the first time,
+> that is it waking up.*
 
 ---
 

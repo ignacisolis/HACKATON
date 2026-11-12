@@ -3,10 +3,12 @@
 Tarea 30. Guion de **4 minutos**, con los tiempos, lo que se dice y lo que se
 muestra en pantalla. Sirve igual para presentar en vivo o para grabar el video.
 
-> **Regla que no se rompe:** no se afirma nada que no se pueda mostrar. Si el
-> backend no está levantado el día de la entrega, se usa el guion alternativo de
-> la sección 6, que es honesto y sigue siendo bueno. Presentar fixtures como si
-> fueran observaciones de SPHEREx nos descalifica, y con razón.
+> **Regla que no se rompe:** no se afirma nada que no se pueda mostrar.
+>
+> El backend **ya está levantado** en `https://spherex-api.onrender.com`, así
+> que el guion principal es el que va. La sección 6 queda como plan B por si el
+> servicio se cae el día de la entrega: Render en plan gratis duerme los
+> servicios inactivos, así que **conviene despertarlo unos minutos antes**.
 
 ---
 
@@ -122,25 +124,31 @@ y protege de la pregunta incómoda.
 
 ---
 
-## 6 · Guion alternativo, si el backend no está levantado
+## 6 · Plan B, si el backend no responde en el momento
 
-Cambia **solo** el bloque 2. Todo lo demás se mantiene, porque las mediciones de
-la sección 3 son reales y reproducibles desde el repo.
+El backend está levantado, así que esto es solo un seguro. Render en plan
+gratis **duerme los servicios inactivos**, y despertarlos tarda hasta un minuto:
+por eso el checklist pide pegarle a `/api/health` antes de empezar.
 
-> «Lo que ven ahora es la interfaz con datos de ejemplo: el backend todavía no
-> está hosteado. Las mediciones que vamos a mostrar son todas de datos reales de
-> SPHEREx y se reproducen con un comando del repositorio.»
+Si aun así no responde, cambia **solo** el bloque 2. Todo lo demás se mantiene,
+porque las mediciones de la sección 3 son reales y reproducibles desde el repo.
+
+> «El servicio está tardando en despertar, así que les muestro la interfaz con
+> los datos de ejemplo del contrato. Las mediciones que vienen son todas de datos
+> reales de SPHEREx y se reproducen con un comando del repositorio.»
 
 Y se muestra la demo corriendo en local contra IRSA, o capturas de los
 resultados reales.
 
-**Lo que NO se dice:** «esto es SPHEREx en vivo». No lo es todavía.
+**Lo que NO se dice:** «esto es SPHEREx en vivo» mientras se estén viendo
+fixtures. Con el backend despierto sí lo es, y entonces se dice.
 
 ---
 
 ## 7 · Checklist antes de grabar
 
-- [ ] El backend responde (`/api/health`) — si no, guion alternativo
+- [ ] **Despertar el backend** unos minutos antes: `curl https://spherex-api.onrender.com/api/health`
+      (Render duerme los servicios gratis; la primera petición puede tardar un minuto)
 - [ ] `VITE_API_BASE` puesta y `VITE_USE_FIXTURES` borrada en Vercel
 - [ ] Los 4 links `?target=` abren y cargan
 - [ ] Ensayar el bloque 2 hasta que salga sin dudar: es el que se mira
@@ -155,7 +163,7 @@ Por si se presenta en inglés. El resto del fraseo está en
 [`README.en.md`](../README.en.md).
 
 - *"The coordinates in the challenge itself are from 2010. The object is now 21 pixels away — and pointing there doesn't fail, it just quietly returns the wrong patch of sky."*
-- *"Across the entire SPHEREx archive, WISE 0855 moves 1.35 pixels. A video shows nothing. Subtracting two epochs shows a dipole at 72 sigma."*
+- *"Across the entire SPHEREx archive, WISE 0855 moves 1.35 pixels — a video shows almost nothing. Subtraction is what reveals motion: two epochs of Epsilon Indi B, 525 days apart, leave a dipole at 72 sigma."*
 - *"Our spectrum reproduces the object's published WISE photometry to within 1 %."*
 - *"The flag covering 41 % of the pixels wasn't a defect — it was the source mask. Masking it deletes the thing you're measuring."*
 - *"We're not claiming more than we can show: below 3 microns that spectrum belongs to a neighbour, not to the dwarf."*
