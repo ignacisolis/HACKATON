@@ -24,14 +24,21 @@ log = logging.getLogger("app")
 
 
 def warm_targets() -> None:
-    """Lee una vez los resúmenes de los objetivos precalculados (R Dra: 2476 cuadros, ~18 s en frío)."""
-    for t in precompute.load_summary():
-        if t.get("cached"):
-            try:
-                frames.list_frames(frames.resolve(None, None, t["size"], t["key"]), do_prefetch=False)
-                log.info("objetivo listo en memoria: %s", t["key"])
-            except Exception as e:  # el arranque nunca debe caerse por esto
-                log.warning("no se pudo precalentar %s: %s", t["key"], e)
+    """Deja en memoria los objetivos precalculados: primero los cuadros (con el índice en disco,
+    menos de 1 s) y después los espectros (~10 s cada uno), para que la demo responda al instante."""
+    ready = [t for t in precompute.load_summary() if t.get("cached")]
+    for t in ready:
+        try:
+            frames.list_frames(frames.resolve(None, None, t["size"], t["key"]), do_prefetch=False)
+            log.info("objetivo listo en memoria: %s", t["key"])
+        except Exception as e:  # el arranque nunca debe caerse por esto
+            log.warning("no se pudo precalentar %s: %s", t["key"], e)
+    for t in ready:
+        try:
+            frames.spectrum(frames.resolve(None, None, t["size"], t["key"]))
+            log.info("espectro listo en memoria: %s", t["key"])
+        except Exception as e:
+            log.warning("no se pudo precalentar el espectro de %s: %s", t["key"], e)
 
 
 @asynccontextmanager
