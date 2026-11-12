@@ -223,7 +223,10 @@ def get_frame_meta(frame_id: str, ra: str | None = None, dec: str | None = None,
 @app.get("/api/spectrum")
 def get_spectrum(ra: str | None = None, dec: str | None = None, target: str | None = None,
                  size: float | None = None):
-    return core_guard(frames.spectrum, resolve(ra, dec, size, target))
+    try:
+        return core_guard(frames.spectrum, resolve(ra, dec, size, target))
+    except frames.TooHeavy as e:
+        raise ApiError(503, "too_heavy", str(e)) from e
 
 
 @app.get("/api/lightcurve")

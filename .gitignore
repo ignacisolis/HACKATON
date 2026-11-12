@@ -6,3 +6,4 @@ cache/
 .claude/
 .ipynb_checkpoints/
 .vercel
+*.tar

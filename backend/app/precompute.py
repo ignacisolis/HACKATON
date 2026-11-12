@@ -45,6 +45,11 @@ def precompute_target(key: str, s: Settings, log=print) -> dict:
             ok += 1
         except irsa.IrsaError:
             pass
+    try:  # el espectro queda en cache/spectra/ y viaja con la caché al servidor
+        sp = frames.spectrum(q, s)
+        log(f"  {key}: espectro de {sp['n_points']} bandas con {sp['n_epochs_used']} exposiciones", flush=True)
+    except Exception as e:  # noqa: BLE001 - un espectro fallido no invalida los cuadros
+        log(f"  {key}: no se pudo calcular el espectro: {e}", flush=True)
     return {**_entry(key, q), "frames": len(obs), "cached": ok,
             "failed": [o.id for o in failed], "seconds": round(time.time() - t0, 1)}
 

@@ -1,0 +1,19 @@
+# Blueprint de Render: backend del visor SPHEREx (tarea 13). Ver deploy/render/DEPLOY.md.
+services:
+  - type: web
+    name: spherex-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: CACHE_DATASET
+        value: Camilocs7/spherex-cache
+      # 512 MB de RAM: un espectro de más de 600 exposiciones que no venga precalculado
+      # responde 503 en vez de tumbar el servidor. Los 4 objetivos vienen en la caché.
+      - key: SPHEREX_SPECTRUM_MAX_FRAMES
+        value: "600"

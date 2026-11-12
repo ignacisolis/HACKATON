@@ -2,7 +2,7 @@
 
 Responsable: Camilo. Carpeta: `backend/` (+ `config/release.yaml`).
 Stack: Python 3.12 + FastAPI. Los IDs (#) son los del Tablero SPHEREx en Notion.
-**Entrega: 15 de noviembre de 2026.** Despliegue: `deploy/huggingface/DEPLOY.md` (Hugging Face Spaces).
+**Entrega: 15 de noviembre de 2026.** Despliegue: `deploy/render/DEPLOY.md` (Render gratis; Hugging Face pide PRO).
 
 ## Principios
 
@@ -22,7 +22,7 @@ Stack: Python 3.12 + FastAPI. Los IDs (#) son los del Tablero SPHEREx en Notion.
 | 1 | 9 | `app/irsa.py` (TAP + cutouts) | Lista las observaciones de WISE 0855 | En revisión (PR #1) |
 | 1 | 10 | `app/cache.py` caché compacta sin PSF | ~100 KB/exposición; 2ª consulta no toca IRSA | En revisión (PR #1) |
 | 1 | 11 | `GET /api/frames` | Valida contra `contracts/fixtures/frames.json` | Hecho (test_contract.py) |
-| 1 | 13 | Desplegar backend público | URL pública responde `/api/frames` para WISE 0855 | En curso: imagen Docker probada en local; falta cuenta de Hugging Face (Camilo) |
+| 1 | 13 | Desplegar backend público | URL pública responde `/api/frames` para WISE 0855 | En curso: imagen de Render probada con 512 MB / 0.1 CPU; falta crear el servicio en el panel |
 | 2 | 20 | `GET /api/frame/{id}/meta` con bits de FLAGS | Valida contra `contracts/fixtures/frame-meta.json` | Hecho (test_contract.py, usa `core.flags`) |
 | 3 | 24 | `GET /api/spectrum` y `/api/lightcurve` | Llama a `core.extract_spectrum()` y valida contra fixture | Endpoint listo y validado con un core falso; responde 501 hasta la tarea 23 |
 | 2 | — | `GET /api/coverage` (bandas, detectores, épocas) | El selector de banda sabe qué hay | Hecho |
