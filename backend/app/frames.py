@@ -139,7 +139,7 @@ def summarize(c: cache.Cutout, o: irsa.Observation, q: Query, s: Settings) -> di
         "mjd": mjd,
         "wavelength_um": round(lam, 4) if lam is not None else None,
         "bandwidth_um": round(bw, 4) if bw is not None else None,
-        "band": s.band_of(o.detector, lam) if lam is not None else None,
+        "band": science.band_of(o.detector, lam) if lam is not None else None,
         "target_radec": [round(t_ra, 6), round(t_dec, 6)],
         "target_pixel": {"x": float(x), "y": float(y), "inside": inside},
         "target_xy": render.grid_xy(q.ra, q.dec, q.size, t_ra, t_dec),
@@ -180,7 +180,7 @@ def list_frames(q: Query, band: int | None = None, detector: int | None = None,
 
     lam_range = None
     if band is not None:
-        det_b, lo, hi = s.band_range_um(band)
+        det_b, lo, hi = science.band_range(band)
         if detector is not None and detector != det_b:
             obs = []
         detector, lam_range = det_b, (lo, hi)
@@ -274,19 +274,30 @@ def ready_frames(q: Query, s: Settings) -> list:
     return out
 
 
-def _point(p, n_epochs=None) -> dict:
-    meta = getattr(p, "meta", None) or {}
+def _point(p) -> dict:
+    """SpectrumPoint de core.combine -> punto del contrato (band, n_epochs y unit vienen de core)."""
     return {
-        "wavelength_um": p.wavelength_um, "bandwidth_um": p.bandwidth_um,
-        "band": get_settings().band_of(int(str(p.detector).lstrip("D")), p.wavelength_um),
-        "flux": p.flux, "flux_err": p.flux_err, "unit": "MJy/sr", "detector": p.detector,
-        "n_epochs": n_epochs if n_epochs is not None else meta.get("n_epochs", 1),
-        "flagged_fraction": p.flagged_fraction, "quality": p.quality,
+        "wavelength_um": p.wavelength_um, "bandwidth_um": p.bandwidth_um, "band": p.band,
+        "flux": p.flux, "flux_err": p.flux_err, "unit": p.unit, "detector": p.detector,
+        "n_epochs": p.n_epochs, "flagged_fraction": p.flagged_fraction, "quality": p.quality,
     }
 
 
+_spectrum_memo: dict[tuple, dict] = {}
+
+
 def spectrum(q: Query, s: Settings | None = None) -> dict:
+    """Memorizado por (consulta, nº de cuadros en caché): ~15 s la primera vez, instantáneo después."""
     s = s or get_settings()
+    n_ready = sum(1 for o in observations_at(q.ra, q.dec, s)
+                  if cache.get_cached_path(o.id, q.ra, q.dec, q.size, s).exists())
+    key = (str(s.cache_dir), q, n_ready)
+    if key not in _spectrum_memo:
+        _spectrum_memo[key] = _spectrum(q, s)
+    return _spectrum_memo[key]
+
+
+def _spectrum(q: Query, s: Settings) -> dict:
     frames = ready_frames(q, s)
     points = science.extract_spectrum(frames, q.target, q.ra, q.dec)
     combined = science.combine(points)
@@ -303,7 +314,7 @@ def spectrum(q: Query, s: Settings | None = None) -> dict:
 
 def lightcurve(q: Query, band: int, s: Settings | None = None) -> dict:
     s = s or get_settings()
-    det, lo, hi = s.band_range_um(band)
+    det, lo, hi = science.band_range(band)
     frames = [f for f in ready_frames(q, s) if f.detector == f"D{det}"]
     points = science.extract_spectrum(frames, q.target, q.ra, q.dec)
     mjds, flux, err = science.light_curve(points, band)

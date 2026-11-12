@@ -19,6 +19,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 import core  # noqa: E402
+from core import bands as core_bands  # noqa: E402
 from core import flags as core_flags  # noqa: E402
 from core import targets as core_targets  # noqa: E402
 from core.datatypes import Frame  # noqa: E402
@@ -100,6 +101,19 @@ def to_frame(c: Cutout, obs: Observation, key: str | None, ra: float, dec: float
         bandwidth_um=float(c.bandwidth_um[i, j]) if inside else math.nan,
         zodi=c.zodi, release=obs.version, meta={"id": obs.id, "collection": obs.collection},
     )
+
+
+# ---------- bandas (core.bands, config/bands.yaml) ----------
+
+def band_of(detector: int, wavelength_um: float) -> int | None:
+    """Banda 1..102 del par (detector, λ). Con el detector, las costuras entre detectores no son ambiguas."""
+    return core_bands.band_of_wavelength(wavelength_um, f"D{detector}")
+
+
+def band_range(band: int) -> tuple[int, float, float]:
+    """(detector, λmin, λmax) de una banda 1..102. KeyError si no existe."""
+    info = core_bands.band_info(band)
+    return int(info["detector"].lstrip("D")), info["wavelength_min_um"], info["wavelength_max_um"]
 
 
 # ---------- FLAGS (core.flags) ----------

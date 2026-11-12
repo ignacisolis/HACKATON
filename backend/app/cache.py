@@ -134,6 +134,11 @@ def _load(path: Path) -> Cutout:
         )
 
 
+def get_cached_path(obs_id: str, ra: float, dec: float, size_deg: float,
+                    s: Settings | None = None) -> Path:
+    return _path(cutout_key(obs_id, ra, dec, size_deg), s or get_settings())
+
+
 def get_cached(obs_id: str, ra: float, dec: float, size_deg: float,
                s: Settings | None = None) -> Cutout | None:
     s = s or get_settings()

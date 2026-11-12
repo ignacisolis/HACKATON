@@ -44,7 +44,8 @@ def test_coverage(client, settings):
     c.get(frames[1]["meta_url"])  # cachea un cutout (λ = 2.0 µm en D3)
     body = c.get("/api/coverage", params={"ra": RA, "dec": DEC}).json()
     assert body["bands_known"] == 1
-    assert body["bands"] == {str(settings.band_of(3, 2.0)): 1}
+    from app import science
+    assert body["bands"] == {str(science.band_of(3, 2.0)): 1}
 
 
 def test_target_position_matches_core():
