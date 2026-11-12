@@ -4,7 +4,7 @@ Uso (desde la raíz del repo, con la caché ya precalculada):
     .venv/bin/python deploy/huggingface/pack_cache.py            # -> spherex-cache.tar
 
 Incluye solo lo que usa la demo: los cutouts de cada objetivo en su centro actual, sus fichas
-de observación, las consultas, el índice de resúmenes y targets.json. Los .npz ya vienen
+de observación, las consultas, el índice de resúmenes, los espectros precalculados y targets.json. Los .npz ya vienen
 comprimidos, así que el .tar va sin comprimir.
 """
 from __future__ import annotations
@@ -34,6 +34,10 @@ def main(out: str = "spherex-cache.tar") -> int:
         idx = base / "index" / f"{frames._qkey(q)}.json"
         if idx.exists():
             files.add(idx)
+        spectra = sorted((base / "spectra").glob(f"{frames._qkey(q)}_*.json"))
+        if not spectra:
+            print(f"[aviso] {t['key']} sin espectro precalculado: el servidor chico respondería 503")
+        files.update(spectra)
         for o in frames.observations_at(q.ra, q.dec, s):
             files.add(base / "obs" / f"{o.id}.json")
             p = cache.get_cached_path(o.id, q.ra, q.dec, q.size, s)

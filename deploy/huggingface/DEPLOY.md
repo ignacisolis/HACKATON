@@ -1,5 +1,7 @@
 # Desplegar el backend en Hugging Face Spaces (tarea 13)
 
+> **Descartado (2026-11-11):** Hugging Face ahora pide PRO para Spaces Docker en CPU gratis (error 402). Se usa Render: ver `deploy/render/DEPLOY.md`. El dataset `Camilocs7/spherex-cache` sí se usa.
+
 Gratis (CPU basic: 2 vCPU, 16 GB de RAM). El Space solo lleva `Dockerfile`, `start.sh` y
 `README.md`: al construir clona `ignacisolis/HACKATON` (público) y al arrancar baja la caché
 precalculada de un **dataset** de Hugging Face. URL final: `https://<usuario>-spherex-api.hf.space`.

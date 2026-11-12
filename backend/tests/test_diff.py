@@ -137,3 +137,28 @@ def test_backoff_grows_and_caps():
     assert irsa.backoff_delay(0) <= 2.5 and irsa.backoff_delay(3) >= 12
     assert irsa.backoff_delay(10) <= irsa.MAX_DELAY_S * 1.25
     assert irsa.backoff_delay(0, retry_after=500) == irsa.MAX_DELAY_S
+
+
+def test_spectrum_saved_to_disk_and_memory_guard(three, settings, monkeypatch):
+    from app import science
+    from core.datatypes import SpectrumPoint
+
+    c, _ = three
+    monkeypatch.setattr(science.core, "extract_spectrum", lambda frames, **kw: [
+        SpectrumPoint(f.wavelength_um, f.bandwidth_um, 1.0, 0.1, f.mjd, f.detector, 9, 0.0) for f in frames])
+    monkeypatch.setattr(science.core, "combine", lambda pts: pts)
+    assert c.get("/api/spectrum", params={"ra": RA, "dec": DEC}).status_code == 200
+    saved = list((settings.cache_dir / "spectra").glob("*.json"))
+    assert len(saved) == 1
+
+    # con el archivo en disco ya no se recalcula (core puede ni existir)
+    frames._spectrum_memo.clear()
+    monkeypatch.setattr(science.core, "extract_spectrum", lambda *a, **k: 1 / 0)
+    assert c.get("/api/spectrum", params={"ra": RA, "dec": DEC}).json()["n_frames_cached"] == 3
+
+    # sin precálculo y con más cuadros que el límite: 503 en JSON, no un servidor sin memoria
+    frames._spectrum_memo.clear()
+    saved[0].unlink()
+    monkeypatch.setenv("SPHEREX_SPECTRUM_MAX_FRAMES", "2")
+    r = c.get("/api/spectrum", params={"ra": RA, "dec": DEC})
+    assert r.status_code == 503 and r.json()["error"] == "too_heavy"

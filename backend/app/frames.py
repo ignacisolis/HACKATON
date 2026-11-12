@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -344,15 +345,41 @@ def _point(p) -> dict:
 _spectrum_memo: dict[tuple, dict] = {}
 
 
+class TooHeavy(RuntimeError):
+    """El cálculo pide más memoria de la que este servidor permite (SPHEREX_SPECTRUM_MAX_FRAMES)."""
+
+
+def _spectrum_path(q: Query, n_ready: int, s: Settings):
+    return s.cache_dir / "spectra" / f"{_qkey(q)}_{n_ready}.json"
+
+
 def spectrum(q: Query, s: Settings | None = None) -> dict:
-    """Memorizado por (consulta, nº de cuadros en caché): ~15 s la primera vez, instantáneo después."""
+    """Espectro memorizado en RAM y en disco (cache/spectra/), por consulta y nº de cuadros en caché.
+
+    Calcularlo carga en memoria TODAS las exposiciones cacheadas (R Dra: 2476, ~360 MB). En un
+    servidor chico se precalcula en local (app.precompute) y viaja con la caché; si falta y hay
+    más cuadros que SPHEREX_SPECTRUM_MAX_FRAMES, se responde 503 en vez de quedarse sin memoria.
+    """
     s = s or get_settings()
     n_ready = sum(1 for o in observations_at(q.ra, q.dec, s)
                   if cache.get_cached_path(o.id, q.ra, q.dec, q.size, s).exists())
     key = (str(s.cache_dir), q, n_ready)
-    if key not in _spectrum_memo:
-        _spectrum_memo[key] = _spectrum(q, s)
-    return _spectrum_memo[key]
+    if key in _spectrum_memo:
+        return _spectrum_memo[key]
+    path = _spectrum_path(q, n_ready, s)
+    if path.exists():
+        _spectrum_memo[key] = json.loads(path.read_text())
+        return _spectrum_memo[key]
+    limit = int(os.environ.get("SPHEREX_SPECTRUM_MAX_FRAMES", "0") or 0)
+    if limit and n_ready > limit:
+        raise TooHeavy(f"el espectro de este punto usa {n_ready} exposiciones y este servidor admite "
+                       f"hasta {limit}; los 4 objetivos de la demo vienen precalculados")
+    _spectrum_memo[key] = result = _spectrum(q, s)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(result))
+    tmp.replace(path)
+    return result
 
 
 def _spectrum(q: Query, s: Settings) -> dict:
