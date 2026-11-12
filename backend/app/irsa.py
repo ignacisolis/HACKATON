@@ -6,13 +6,88 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
+import random
 import re
+import threading
 import time
 from dataclasses import asdict, dataclass
 
 import httpx
 
 from .settings import Settings, get_settings
+
+log = logging.getLogger(__name__)
+
+# ---------- reintentos con espera compartida ----------
+# IRSA corta con 503 después de ~15 descargas seguidas (Nacho, Bitácora 11-nov). Cuando
+# un hilo recibe 503/429, TODOS los hilos esperan (pausa compartida) en vez de seguir
+# golpeando; la espera crece exponencialmente y respeta Retry-After si IRSA lo manda.
+RETRY_STATUS = {429, 500, 502, 503, 504}
+MAX_ATTEMPTS = 6
+BASE_DELAY_S = 2.0
+MAX_DELAY_S = 60.0
+
+_pause_until = 0.0
+_pause_lock = threading.Lock()
+
+
+def _wait_for_pause() -> None:
+    while True:
+        with _pause_lock:
+            remaining = _pause_until - time.monotonic()
+        if remaining <= 0:
+            return
+        time.sleep(min(remaining, 5.0))
+
+
+def _pause_all(seconds: float) -> None:
+    global _pause_until
+    with _pause_lock:
+        _pause_until = max(_pause_until, time.monotonic() + seconds)
+
+
+def _retry_after(r: httpx.Response | None) -> float | None:
+    try:
+        return float(r.headers["Retry-After"]) if r is not None else None
+    except (KeyError, ValueError):
+        return None
+
+
+def backoff_delay(attempt: int, retry_after: float | None = None) -> float:
+    """Espera antes del intento `attempt` (0 = primero que falló): 2, 4, 8, 16, 32, 60 s ± 25 %."""
+    if retry_after is not None:
+        return min(MAX_DELAY_S, retry_after)
+    d = min(MAX_DELAY_S, BASE_DELAY_S * 2 ** attempt)
+    return d * random.uniform(0.75, 1.25)
+
+
+def _request(method: str, url: str, s: Settings, what: str, **kw) -> httpx.Response:
+    """GET/POST a IRSA con reintentos; los errores 4xx que no son 429 no se reintentan."""
+    last: Exception | None = None
+    for attempt in range(MAX_ATTEMPTS):
+        _wait_for_pause()
+        r = None
+        try:
+            r = httpx.request(method, url, timeout=s.timeout_s, follow_redirects=True, **kw)
+            if r.status_code in RETRY_STATUS:
+                raise httpx.HTTPStatusError(f"HTTP {r.status_code}", request=r.request, response=r)
+            r.raise_for_status()
+            return r
+        except httpx.HTTPStatusError as e:
+            last = e
+            if e.response.status_code not in RETRY_STATUS:
+                break
+            delay = backoff_delay(attempt, _retry_after(e.response))
+            if e.response.status_code in (429, 503):
+                _pause_all(delay)  # IRSA pide aire: frenan todos los hilos
+        except httpx.TransportError as e:  # timeouts, conexión cortada
+            last = e
+            delay = backoff_delay(attempt)
+        if attempt < MAX_ATTEMPTS - 1:
+            log.info("%s: %s; reintento %d en %.0f s", what, last, attempt + 1, delay)
+            time.sleep(delay)
+    raise IrsaError(f"{what} falló tras {MAX_ATTEMPTS} intentos: {last}")
 
 _FILE_RE = re.compile(r"level2_(?P<id>.+?)_spx_(?P<version>l2b-v\d+-\d{4}-\d+)\.fits$")
 _DID_RE = re.compile(r"^ivo://irsa\.ipac/(?P<collection>[A-Za-z0-9_]+)\?")
@@ -42,11 +117,7 @@ class IrsaError(RuntimeError):
 
 
 def _tap(query: str, s: Settings) -> list[dict]:
-    try:
-        r = httpx.post(s.tap_url, data={"QUERY": query, "FORMAT": "csv"}, timeout=s.timeout_s)
-        r.raise_for_status()
-    except httpx.HTTPError as e:
-        raise IrsaError(f"TAP de IRSA falló: {e}") from e
+    r = _request("POST", s.tap_url, s, "TAP de IRSA", data={"QUERY": query, "FORMAT": "csv"})
     if r.text.lstrip().startswith("<"):  # IRSA devuelve VOTable de error aunque se pida CSV
         raise IrsaError(f"TAP de IRSA devolvió un error: {r.text[:500]}")
     return list(csv.DictReader(io.StringIO(r.text)))
@@ -143,19 +214,11 @@ def cutout_url(obs_uri: str, ra: float, dec: float, size_deg: float, s: Settings
 
 
 def fetch_cutout(obs_uri: str, ra: float, dec: float, size_deg: float,
-                 s: Settings | None = None, retries: int = 2) -> bytes:
-    """Descarga el cutout MEF (FITS) de una observación. Reintenta errores transitorios."""
+                 s: Settings | None = None) -> bytes:
+    """Descarga el cutout MEF (FITS) de una observación, con reintentos y espera compartida."""
     s = s or get_settings()
     url = cutout_url(obs_uri, ra, dec, size_deg, s)
-    last: Exception | None = None
-    for attempt in range(retries + 1):
-        try:
-            r = httpx.get(url, timeout=s.timeout_s, follow_redirects=True)
-            r.raise_for_status()
-            if not r.content.startswith(b"SIMPLE"):
-                raise IrsaError(f"IRSA no devolvió un FITS para {url}: {r.content[:200]!r}")
-            return r.content
-        except (httpx.HTTPError, IrsaError) as e:
-            last = e
-            time.sleep(2 * (attempt + 1))
-    raise IrsaError(f"cutout falló tras {retries + 1} intentos: {last}")
+    r = _request("GET", url, s, f"cutout {obs_uri.rsplit('/', 1)[-1]}")
+    if not r.content.startswith(b"SIMPLE"):
+        raise IrsaError(f"IRSA no devolvió un FITS para {url}: {r.content[:200]!r}")
+    return r.content

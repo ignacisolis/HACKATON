@@ -42,9 +42,11 @@ pendiente, 502 IRSA).
 
 | Endpoint | Qué devuelve |
 |---|---|
-| `GET /api/frames?target=\|ra&dec&size&band&detector&limit&offset` | Cuadros por fecha: `id, mjd, date, detector ("D2"), wavelength_um, bandwidth_um, band, release, image_url, target_xy, flagged_fraction, quality` + `ready, meta_url, collection`. Arriba: `n_frames, n_dates, pending, complete`. |
+| `GET /api/frames?target=\|ra&dec&size&band&detector&limit&offset` | Cuadros por fecha: `id, mjd, date, detector ("D2"), wavelength_um, bandwidth_um, band, release, image_url, target_xy, flagged_fraction, quality, display_range` + `ready, meta_url, collection`. Arriba: `n_frames, n_dates, pending, complete`. |
 | `GET /api/frame/{id}/png?…&stretch=asinh\|linear&layer=image\|image-zodi\|variance\|flags&bits=SOURCE,21` | PNG norte arriba en una grilla de cielo fija. |
 | `GET /api/frame/{id}/meta?…` | Header + `flags.cutout_counts` (del recorte), `full_frame_counts` (de la exposición entera), `undocumented_bits_present`, `at_target`, `mask_layers`, `quality`, `target`. |
+| `GET /api/diff?a=&b=&…&zodi=true&format=png\|json` | Resta `a − b` en MJy/sr con `core.subtract_frames` (ZODI restado), PNG divergente + headers `X-Dipole-SNR`, `X-Dipole-Detected`, `X-Diff-Vmax`. 422 `not_comparable`. |
+| `GET /api/pairs?…&detector=&band=&limit=` | Pares restables (`core.is_comparable`) desde el índice, del más separado en el tiempo al menos, con `diff_url`. |
 | `GET /api/coverage?…` | Por detector, colección, fecha, época y banda, sin bajar cutouts. |
 | `GET /api/targets` | Los 4 objetivos, su centro y cuánto hay en caché. |
 | `GET /api/spectrum?…` | Llama a `core.extract_spectrum` + `core.combine`. **501** hasta que exista la tarea 23. |
@@ -68,6 +70,16 @@ Por eso `target_xy` cambia de cuadro a cuadro y el frontend debe dibujar la cruz
 | Posición del objetivo por fecha | `core.targets.target_position`, interpolada entre los bordes de la ventana (error < 0.001″, hay test). |
 | `flagged_fraction`, `cutout_counts`, `mask_layers` | `core.flags.mask_for(…, "photometry")`, `bit_counts`, `pipeline_counts`. |
 | Video | Grilla de cielo norte arriba (`render.py`). `core.align_frames` traslada pero no rota, y cada visita de SPHEREx viene con otro ángulo; queda para restas y fotometría. |
+
+### Índice en disco y reintentos
+
+- `cache/index/<consulta>.json` guarda el resumen de cada cuadro (λ y ancho en el objetivo, banda,
+  `target_xy`, `flagged_fraction`, `quality`, `display_range`). El servidor arranca sin abrir miles de
+  `.npz`, y `/api/pairs` encuentra pares restables sin bajar nada. `SUMMARY_VERSION` en `frames.py`
+  invalida los índices viejos si cambia lo que se guarda.
+- IRSA corta con 503 tras ~15 descargas seguidas. `irsa._request` reintenta hasta 6 veces con espera
+  exponencial (2, 4, 8, 16, 32, 60 s ± 25 %), respeta `Retry-After`, y ante un 503/429 **pausa a
+  todos los hilos** a la vez. Los 404 no se reintentan.
 
 ## Releases (C1)
 

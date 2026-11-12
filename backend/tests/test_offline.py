@@ -11,15 +11,18 @@ from conftest import DEC, RA, TAP_ROWS, fake_mef
 def test_release_config(settings):
     assert "spherex_qr2" in settings.collections
     assert not any(c.endswith("_cal") for c in settings.collections)
-    assert set(settings.detectors_um) == {1, 2, 3, 4, 5, 6}
 
 
-def test_bands_roundtrip(settings):
+def test_bands_come_from_core():
+    """La banda la decide core.bands con el par (detector, λ): en las costuras no hay ambigüedad."""
+    from app import science
     for band in (1, 17, 18, 50, 102):
-        det, lo, hi = settings.band_range_um(band)
-        assert settings.band_of(det, (lo + hi) / 2) == band
-    with pytest.raises(ValueError):
-        settings.band_range_um(103)
+        det, lo, hi = science.band_range(band)
+        assert science.band_of(det, (lo + hi) / 2) == band
+    # 1.11 µm cae en la costura D1/D2: el detector decide
+    assert science.band_of(1, 1.11) == 17 and science.band_of(2, 1.11) == 18
+    with pytest.raises(KeyError):
+        science.band_range(103)
 
 
 def test_query_is_numeric_only(settings):
@@ -111,3 +114,20 @@ def test_flags_layer_and_errors_are_json(client):
         assert r.status_code == code, url
         if code != 404 or "etc" not in url:
             assert set(r.json()) == {"error", "detail"}, url
+
+
+def test_meta_with_nan_target_pixel(client, monkeypatch):
+    """Un píxel NaN en el objetivo (estrella saturada) no rompe el JSON: viaja como null."""
+    from app import cache as cache_mod
+    real = cache_mod.compact_from_fits
+
+    def with_nan(raw):
+        c = real(raw)
+        c.image[:] = np.nan
+        return c
+
+    monkeypatch.setattr(cache_mod, "compact_from_fits", with_nan)
+    c, _ = client
+    f = c.get("/api/frames", params={"ra": RA, "dec": DEC, "prefetch": False}).json()["frames"][1]
+    r = c.get(f["meta_url"])
+    assert r.status_code == 200 and r.json()["target"]["value"] is None

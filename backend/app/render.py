@@ -48,14 +48,54 @@ def reproject(c: Cutout, layer: np.ndarray, ra: float, dec: float, size_deg: flo
     return out.reshape(n, n)
 
 
+def grid_layers(c: Cutout, ra: float, dec: float, size_deg: float, subtract_zodi: bool = False):
+    """Imagen, varianza y FLAGS en la grilla de cielo común, con su WCS. Arrays con y hacia arriba.
+
+    La varianza se interpola bilineal igual que la imagen. Eso la SOBREESTIMA un poco (la
+    propagación exacta usa los pesos al cuadrado, que suman ≤ 1), así que los S/N que salen
+    de acá son conservadores.
+    """
+    w, _ = target_wcs(ra, dec, size_deg)
+    img = reproject(c, c.image - c.zodi if subtract_zodi else c.image, ra, dec, size_deg)
+    var = reproject(c, c.variance, ra, dec, size_deg)
+    flags = reproject(c, c.flags, ra, dec, size_deg, order=0).astype(np.uint32)
+    return img, var, flags, w
+
+
+def display_range(grid_img: np.ndarray) -> dict:
+    """Límites que usaría el estirado, en MJy/sr, para que el frontend fije uno común al video."""
+    ok = np.isfinite(grid_img)
+    if ok.sum() <= 10:
+        return {"zscale": None, "p99_7": None}
+    lo, hi = ZScaleInterval().get_limits(grid_img[ok])
+    return {"zscale": [round(float(lo), 5), round(float(hi), 5)],
+            "p99_7": round(float(np.percentile(grid_img[ok], 99.7)), 5)}
+
+
+def diff_png(diff: np.ndarray, vmax: float) -> bytes:
+    """Escala divergente simétrica: gris medio = 0, blanco = +vmax, negro = −vmax; NaN transparente."""
+    g = np.clip(np.nan_to_num(diff) / max(vmax, 1e-12), -1, 1)
+    gray = (127.5 + 127.5 * g).round().astype(np.uint8)
+    rgba = np.dstack([gray, gray, gray, np.where(np.isfinite(diff), 255, 0).astype(np.uint8)])
+    return to_png(rgba)
+
+
 def grid_xy(ra_c: float, dec_c: float, size_deg: float, ra: float, dec: float) -> list[float]:
     """Dónde cae (ra, dec) en el PNG devuelto: píxeles base 0, x a la derecha, y hacia abajo."""
-    w, n = target_wcs(ra_c, dec_c, size_deg)
+    x, y = grid_array_xy(ra_c, dec_c, size_deg, ra, dec)
+    _, n = target_wcs(ra_c, dec_c, size_deg)
+    return [round(x, 2), round(n - 1 - y, 2)]
+
+
+def grid_array_xy(ra_c: float, dec_c: float, size_deg: float, ra: float, dec: float) -> tuple[float, float]:
+    """Lo mismo en coordenadas del array (y hacia arriba), que es lo que usa core/."""
+    w, _ = target_wcs(ra_c, dec_c, size_deg)
     x, y = w.all_world2pix([[ra, dec]], 0)[0]
-    return [round(float(x), 2), round(float(n - 1 - y), 2)]
+    return float(x), float(y)
 
 
 STRETCHES = ("linear", "asinh")
+ASINH_SOFT, ASINH_MAX = 3.0, 5.0
 
 
 def stretch(img: np.ndarray, vmin: float | None = None, vmax: float | None = None,
@@ -63,13 +103,14 @@ def stretch(img: np.ndarray, vmin: float | None = None, vmax: float | None = Non
     ok = np.isfinite(img)
     if vmin is None or vmax is None:
         lo, hi = ZScaleInterval().get_limits(img[ok]) if ok.sum() > 10 else (0.0, 1.0)
-        if kind == "asinh" and ok.any():  # asinh deja ver fuentes brillantes sin quemar el fondo
-            hi = max(hi, float(np.nanpercentile(img[ok], 99.7)))
         vmin = lo if vmin is None else vmin
         vmax = hi if vmax is None else vmax
-    scaled = np.nan_to_num(np.clip((img - vmin) / max(vmax - vmin, 1e-12), 0, 1))
+    x = (img - vmin) / max(vmax - vmin, 1e-12)
     if kind == "asinh":
-        scaled = np.arcsinh(10 * scaled) / np.arcsinh(10)
+        # El fondo ocupa el rango zscale y las fuentes brillantes (hasta 5x ese rango) se comprimen
+        # sin quemarse. No depende de percentiles: un par de píxeles calientes no oscurece el cuadro.
+        x = np.arcsinh(ASINH_SOFT * np.clip(x, 0, ASINH_MAX)) / np.arcsinh(ASINH_SOFT * ASINH_MAX)
+    scaled = np.nan_to_num(np.clip(x, 0, 1))
     out = (scaled * 255).astype(np.uint8)
     out[~ok] = 0
     return out
