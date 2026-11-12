@@ -58,6 +58,33 @@ necesita acceso al repo por la GitHub App, que en un repo de `ignacisolis` insta
 Blueprint, cada merge a `main` despliega solo; con *Public Git Repository* hay que pulsar
 **Manual Deploy → Deploy latest commit** (o usar el *Deploy Hook* de Settings).
 
+## Redespliegue automático (Deploy Hook)
+
+`.github/workflows/deploy-render.yml` redespliega cuando `main` cambia **y** los tests del
+backend pasan. Configurarlo una vez:
+
+1. **Camilo**, en Render: servicio `spherex-api` → **Settings → Deploy Hook** → copiar la URL.
+   Es secreta (cualquiera con ella puede redesplegar): pasarla a Ignacio por privado, nunca en
+   el repo, en un PR ni en Notion.
+2. **Ignacio** (admin del repo): GitHub → *Settings → Secrets and variables → Actions → New
+   repository secret* → nombre `RENDER_DEPLOY_HOOK`, valor la URL.
+
+Sin el secreto el workflow no hace nada y hay que usar **Manual Deploy → Deploy latest commit**.
+
+## Mantener despierto el día de la demo
+
+`.github/workflows/keepalive-render.yml` pinguea `/api/health` cada 5 min del 14 al 16 de
+noviembre (UTC). Corre solo desde `main`. Para probarlo: *Actions → keepalive-render → Run
+workflow*. Igual conviene abrir `/api/health` antes de presentar: GitHub puede atrasar los cron.
+
+## Mejores restas por objetivo
+
+`python -m app.best_pairs` (desde `backend/`) prueba ~40 pares por detector, mide el dipolo y
+lo contrasta con el movimiento propio esperado; `/api/targets` lo expone como `best_pair` y
+`motion`. Resultado (2026-11-12): **eps Ind B confirmado en 6/6 detectores** (mejor D2, S/N 92.6,
+521 días); WISE 0855 solo **indicio** (3/6, S/N 3–5: no presentarlo como detección); RW Aur y
+R Dra sin movimiento, como corresponde. Va dentro de la caché (`best_pairs.json`).
+
 ## Cosas a saber del plan gratis
 
 - **Se duerme tras 15 min sin visitas** y despertar tarda ~1.5 min (vuelve a bajar la caché).

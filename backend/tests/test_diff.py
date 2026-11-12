@@ -189,3 +189,37 @@ def test_root_redirects_to_docs(client):
     c, _ = client
     r = c.get("/", follow_redirects=False)
     assert r.status_code in (302, 307) and r.headers["location"] == "/docs"
+
+
+# ---------- comprobación física del dipolo y mejores pares ----------
+
+def test_motion_check_direction_and_size(settings):
+    from app import science
+
+    q = frames.resolve(None, None, 0.1, "eps_ind_b")
+    a, b = science.window_mjd()  # ~525 días: eps Ind B se corre ~1.1 px
+    ok = frames.motion_check(q, b, a, {"detected": True, "pos_xy": None, "neg_xy": None})
+    ex, ey = ok["expected_px"]
+    assert 0.9 < ok["expected_len_px"] < 1.3
+    # dipolo en la dirección esperada -> consistente; al revés -> no
+    good = {"detected": True, "pos_xy": [10 + round(ex), 10 + round(ey)], "neg_xy": [10, 10]}
+    bad = {"detected": True, "pos_xy": [10 - round(ex), 10 - round(ey)], "neg_xy": [10, 10]}
+    assert frames.motion_check(q, b, a, good)["consistent"]
+    assert not frames.motion_check(q, b, a, bad)["consistent"]
+    # sin movimiento esperado (misma fecha) nunca se afirma movimiento
+    assert not frames.motion_check(q, a, a, good)["consistent"]
+    # un dipolo no detectado tampoco
+    assert not frames.motion_check(q, b, a, {**good, "detected": False})["consistent"]
+
+
+def test_best_pairs_and_targets(three, settings, monkeypatch):
+    from app import best_pairs, precompute, science
+
+    c, _ = three
+    monkeypatch.setattr(science, "target_keys", lambda: ["wise_0855"])
+    monkeypatch.setattr(irsa, "_tap", lambda q, s: TAP_ROWS + [ROW_D3_B])
+    assert precompute.main([]) == 0
+    assert best_pairs.main(["--per-detector", "5"]) == 0
+    t = c.get("/api/targets").json()["targets"][0]
+    assert t["motion"]["claim"] in {"confirmado", "indicio", "no"}
+    assert t["best_pair"] is None or t["best_pair"]["diff_url"].startswith("/api/diff?")

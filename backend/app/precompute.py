@@ -73,13 +73,19 @@ def _read_summary(s: Settings) -> dict[str, dict]:
 def load_summary(s: Settings | None = None) -> list[dict]:
     """Lo que devuelve /api/targets: los objetivos de targets.yaml y cuánto está en caché."""
     s = s or get_settings()
+    from . import best_pairs  # import local: best_pairs importa este módulo
+
     done = _read_summary(s)
+    best = best_pairs.load(s)
     out = []
     for key in science.target_keys():
         q = frames.resolve(None, None, s.default_size_deg, key)
         r = done.get(key)
-        out.append(r if r and (r["ra"], r["dec"]) == (q.ra, q.dec)
-                   else {**_entry(key, q), "frames": None, "cached": 0, "failed": []})
+        row = (r if r and (r["ra"], r["dec"]) == (q.ra, q.dec)
+               else {**_entry(key, q), "frames": None, "cached": 0, "failed": []})
+        # La resta que mejor muestra el movimiento (python -m app.best_pairs), o None.
+        bp = best.get(key) or {}
+        out.append({**row, "best_pair": bp.get("best"), "motion": bp.get("motion")})
     return out
 
 

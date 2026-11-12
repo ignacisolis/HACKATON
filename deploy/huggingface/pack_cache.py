@@ -25,6 +25,10 @@ def main(out: str = "spherex-cache.tar") -> int:
     s = get_settings()
     base = s.cache_dir
     files: set[Path] = {base / "targets.json"}
+    if (base / "best_pairs.json").exists():
+        files.add(base / "best_pairs.json")
+    else:
+        print("[aviso] sin cache/best_pairs.json: corre python -m app.best_pairs desde backend/")
     for t in precompute.load_summary(s):
         if not t.get("cached"):
             print(f"[aviso] {t['key']} no está precalculado: python -m app.precompute --only {t['key']}")

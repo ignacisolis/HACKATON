@@ -512,6 +512,37 @@ def _jsonable(v):
     return v
 
 
+MOTION_MAX_ANGLE_DEG = 45.0
+MOTION_MIN_EXPECTED_PX = 0.5
+
+
+def motion_check(q: Query, mjd_a: float, mjd_b: float, dipole: dict) -> dict:
+    """¿El dipolo apunta y mide lo que predice el movimiento propio (core.targets)?
+
+    Un dipolo "detectado" solo dice que hay dos lóbulos juntos; puede ser una fuente vecina, un
+    residuo de PSF o una fuente variable. Es movimiento del objetivo si el vector negativo→positivo
+    va en la dirección esperada (≤ 45°) y su largo no excede lo esperado en más de 2 px.
+    Con un desplazamiento esperado < 0.5 px no se puede afirmar nada (consistent = False).
+    """
+    xa, ya = render.grid_array_xy(q.ra, q.dec, q.size, *science.position_at(q.target, q.ra, q.dec, mjd_a))
+    xb, yb = render.grid_array_xy(q.ra, q.dec, q.size, *science.position_at(q.target, q.ra, q.dec, mjd_b))
+    ex, ey = xa - xb, ya - yb
+    out = {"expected_px": [round(ex, 2), round(ey, 2)], "expected_len_px": round(float(np.hypot(ex, ey)), 2),
+           "measured_px": None, "angle_deg": None, "consistent": False}
+    pos, neg = dipole.get("pos_xy"), dipole.get("neg_xy")
+    if pos is None or neg is None:
+        return out
+    mx, my = float(pos[0]) - float(neg[0]), float(pos[1]) - float(neg[1])
+    out["measured_px"] = [round(mx, 2), round(my, 2)]
+    e_len, m_len = np.hypot(ex, ey), np.hypot(mx, my)
+    if e_len < MOTION_MIN_EXPECTED_PX or m_len == 0:
+        return out
+    angle = float(np.degrees(np.arccos(np.clip((ex * mx + ey * my) / (e_len * m_len), -1, 1))))
+    out["angle_deg"] = round(angle, 1)
+    out["consistent"] = bool(dipole.get("detected") and angle <= MOTION_MAX_ANGLE_DEG and m_len <= e_len + 2)
+    return out
+
+
 def diff(q: Query, a: irsa.Observation, b: irsa.Observation, subtract_zodi: bool = True,
          s: Settings | None = None) -> dict:
     """a − b en MJy/sr con core.subtract_frames, y el dipolo de movimiento con core.dipole_snr.
@@ -534,6 +565,7 @@ def diff(q: Query, a: irsa.Observation, b: irsa.Observation, subtract_zodi: bool
     dipole = science.core.dipole_snr(d, var, center=center)
     finite = np.isfinite(d)
     vmax = float(np.percentile(np.abs(d[finite]), 99.5)) if finite.any() else 1.0
+    motion = motion_check(q, fa.mjd, fb.mjd, dipole) if q.target else None
     return {
         "diff": d, "usable": usable, "vmax_auto": vmax,
         "info": _jsonable({
@@ -548,6 +580,7 @@ def diff(q: Query, a: irsa.Observation, b: irsa.Observation, subtract_zodi: bool
             "n_usable": int(usable.sum()),
             "dipole": dipole,
             "dipole_center_xy": render.grid_xy(q.ra, q.dec, q.size, t_ra, t_dec),
+            "motion_check": motion,
         }),
     }
 
