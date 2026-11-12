@@ -1,0 +1,25 @@
+# Mantiene despierto el backend en Render los días de la demo.
+#
+# El plan gratis se duerme tras 15 min sin visitas y despertar tarda ~1.5 min (vuelve a bajar la
+# caché). Esto lo pinguea cada 5 min del 14 al 16 de noviembre (UTC), que cubre el 15 en Chile.
+# GitHub atrasa a veces los cron programados; 5 min deja margen contra los 15 de Render.
+# Los cron solo corren desde la rama por defecto (main). También se puede lanzar a mano.
+name: keepalive-render
+
+on:
+  schedule:
+    - cron: "*/5 * 14-16 11 *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Ping a /api/health (con reintentos mientras despierta)
+        run: |
+          for i in 1 2 3 4; do
+            if curl -fsS --max-time 120 https://spherex-api.onrender.com/api/health; then exit 0; fi
+            sleep 20
+          done
+          echo "::error::el backend no respondió"; exit 1

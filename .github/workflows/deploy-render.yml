@@ -1,0 +1,29 @@
+# Redespliega el backend en Render cuando main cambia y los tests del backend pasan.
+#
+# El servicio se creó como "Public Git Repository", que no redespliega solo. Render da un
+# Deploy Hook (una URL secreta) y este workflow la llama. La URL va como secreto del repo
+# RENDER_DEPLOY_HOOK (lo carga Ignacio, que es admin). Sin el secreto, no hace nada.
+name: deploy-render
+
+on:
+  workflow_run:
+    workflows: [backend-tests]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Llamar al Deploy Hook de Render
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::notice::Falta el secreto RENDER_DEPLOY_HOOK: no se redespliega (ver deploy/render/DEPLOY.md)"
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null && echo "Render recibió el pedido de deploy"
