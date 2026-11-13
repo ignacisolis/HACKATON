@@ -24,6 +24,7 @@ vi.mock('../../api/client', async () => {
   return {
     ApiError,
     api: {
+      targets: vi.fn(async () => []),
       meta: vi.fn(async (f: Frame) => ({ ...(structuredClone(metaFx) as unknown as FrameMeta), id: f.id,
         flags: { ...(metaFx as unknown as FrameMeta).flags, at_target: ['SOURCE'] } })),
       diffCheck: vi.fn(async () => new ApiError(404, { error: 'not_found', detail: 'Not Found' })),

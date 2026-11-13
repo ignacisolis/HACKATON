@@ -6,6 +6,7 @@ import { api, ApiError } from '../../api/client'
 import type { Frame, SkyQuery } from '../../api/types'
 import { useT } from '../../i18n'
 import { useView } from '../../state/view'
+import { findTarget, useTargets } from '../nav/targets'
 import {
   candidates, classifyDiff, compareHint, defaultReference, fmtDateUtc, fmtNum,
   type CompareHint, type CompareLevel, type DiffStatus, type Lang,
@@ -53,9 +54,13 @@ function StatusNotice({ s, onRetry }: { s: Checked; onRetry: () => void }) {
   }
 }
 
-export default function DiffTab({ current, frames, query }: { current: Frame; frames: Frame[]; query: SkyQuery }) {
+export default function DiffTab({ current: videoFrame, frames, query }: { current: Frame; frames: Frame[]; query: SkyQuery }) {
   const t = useT()
   const { view, setView } = useView()
+  const { list: targets } = useTargets()
+  const target = findTarget(targets, view.target)
+  const best = target?.bestPair ?? null
+  const motion = target?.motion ?? null
   const lang = view.lang
   const selId = useId()
   const [mode, setMode] = useState<Mode>('diff')
@@ -63,6 +68,13 @@ export default function DiffTab({ current, frames, query }: { current: Frame; fr
   const [checked, setChecked] = useState<{ key: string; s: Checked } | null>(null)
 
   const byId = useMemo(() => new Map(frames.map(f => [f.id, f])), [frames])
+  // A fijado (view.diffA, p. ej. el mejor par del backend): no sigue al video. Si todavía no está entre
+  // los cuadros (se está cargando otro detector), A sigue siendo el cuadro del video.
+  const pinned = view.diffA ? byId.get(view.diffA) ?? null : null
+  const current = pinned ?? videoFrame
+  const onBest = best != null && view.diffA === best.a && view.diff === best.b
+  const applyBest = () => { if (best) setView({ det: best.detector, band: null, diffA: best.a, diff: best.b }) }
+  const loadingBest = best != null && view.diffA === best.a && !pinned
   const cands = useMemo(() => candidates(current, frames), [current, frames])
   const proposed = useMemo(() => defaultReference(current, frames), [current, frames])
   const chosen = view.diff ? byId.get(view.diff) ?? null : null
@@ -71,8 +83,9 @@ export default function DiffTab({ current, frames, query }: { current: Frame; fr
 
   // Si no hay B guardado (o ya no está entre los cuadros), se guarda el sugerido: la URL refleja lo que se ve.
   useEffect(() => {
-    if (!chosen && proposed && view.diff !== proposed.id) setView({ diff: proposed.id })
-  }, [chosen, proposed?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+    // con A fijado (mejor par) no se pisa B: mientras carga el otro detector B todavía no está en la lista
+    if (!view.diffA && !chosen && proposed && view.diff !== proposed.id) setView({ diff: proposed.id })
+  }, [chosen, proposed?.id, view.diffA]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const qKey = JSON.stringify(query)
   const key = B && !same ? `${current.id}|${B.id}|${qKey}|${nonce}` : null
@@ -104,6 +117,33 @@ export default function DiffTab({ current, frames, query }: { current: Frame; fr
   return (
     <div className="ins-diff">
       <p className="ins-lead">{t('inspect.diff.intro')}</p>
+
+      {best && (
+        <div className={`ins-best ${onBest ? 'on' : ''}`}>
+          <p className="ins-best-head">
+            <strong>{t('inspect.diff.best.title')}</strong>
+            {motion && <span className={`badge ${motion.claim === 'confirmado' ? 'ok' : motion.claim === 'indicio' ? 'warn' : ''}`}>
+              {t(`inspect.diff.best.claim.${motion.claim === 'confirmado' ? 'confirmed' : motion.claim === 'indicio' ? 'hint' : 'none'}`)}
+              {' · '}{t('inspect.diff.best.detectors', { k: motion.detectors_consistent, n: motion.detectors_tested })}
+            </span>}
+          </p>
+          <p className="muted mono">
+            {t('inspect.diff.best.detail', {
+              det: best.detector, dt: fmtNum(best.dt_days, 0, lang),
+              snr: fmtNum(Math.min(best.pos_snr, best.neg_snr), 1, lang),
+            })}
+          </p>
+          {!onBest && <button type="button" className="btn primary" onClick={applyBest}>{t('inspect.diff.best.use')}</button>}
+          {loadingBest && <p className="notice info" role="status">{t('inspect.diff.best.loading')}</p>}
+          {pinned && (
+            <p className="muted">
+              {t('inspect.diff.best.pinned')}{' '}
+              <button type="button" className="ins-suggest" onClick={() => setView({ diffA: null })}>{t('inspect.diff.best.unpin')}</button>
+            </p>
+          )}
+          {motion?.claim === 'no' && <p className="muted">{t('inspect.diff.best.noMotion')}</p>}
+        </div>
+      )}
 
       <dl className="ins-dl ins-ab">
         <dt>{t('inspect.diff.a')}</dt>

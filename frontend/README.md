@@ -11,7 +11,10 @@ npm install
 npm run dev            # http://localhost:5173 — /api va por proxy al backend en :8000
 ```
 
-El backend se levanta aparte (ver `backend/README.md`). Sin backend, con datos de prueba:
+El backend se levanta aparte (ver `backend/README.md`). Para usar el backend público en vez del
+local, crear `frontend/.env.development.local` (no se commitea) con
+`VITE_API_BASE=https://spherex-api.onrender.com`. Tiene que ser `.env.development.local`:
+`.env.local` pierde contra `.env.development`. Sin backend, con datos de prueba:
 
 ```bash
 VITE_USE_FIXTURES=1 npm run dev

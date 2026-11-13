@@ -13,6 +13,8 @@ interface Props {
   /** centro y lado del recorte (response.query): necesarios para pasar de píxel a cielo */
   center: { ra: number; dec: number; size: number } | null
   pick: { ra: number; dec: number } | null
+  /** posiciones de referencia a marcar (p. ej. coordenadas del enunciado), en grados ICRS */
+  refMarks?: { ra: number; dec: number; label: string }[]
   onPick: (p: { ra: number; dec: number }) => void
   waiting: boolean
   label: string
@@ -39,7 +41,11 @@ export default function Stage(p: Props) {
   const pk = nat && p.center && p.pick
     ? skyToPixel(p.pick.ra, p.pick.dec, W, H, p.center.ra, p.center.dec, p.center.size)
     : null
-  const pickInside = pk && pk.x >= -0.5 && pk.y >= -0.5 && pk.x <= W - 0.5 && pk.y <= H - 0.5
+  const inside = (q: { x: number; y: number }) => q.x >= -0.5 && q.y >= -0.5 && q.x <= W - 0.5 && q.y <= H - 0.5
+  const pickInside = pk && inside(pk)
+  const refs = nat && p.center
+    ? (p.refMarks ?? []).map(r => ({ ...r, ...skyToPixel(r.ra, r.dec, W, H, p.center!.ra, p.center!.dec, p.center!.size) })).filter(inside)
+    : []
 
   // brazos de la cruz con un hueco en el centro para no tapar el objeto (en píxeles del PNG)
   const arm = (cx: number, cy: number) => {
@@ -80,6 +86,14 @@ export default function Stage(p: Props) {
               ))}
             </g>
           )}
+          {refs.map((r, k) => (
+            <g key={k} className="pl-ref">
+              <title>{r.label}</title>
+              {/* rombo: posición de catálogo, distinta de la cruz (dónde está el objeto ese día) */}
+              <polygon points={`${r.x + 0.5},${r.y - 2} ${r.x + 3},${r.y + 0.5} ${r.x + 0.5},${r.y + 3} ${r.x - 2},${r.y + 0.5}`}
+                vectorEffect="non-scaling-stroke" />
+            </g>
+          ))}
           {pk && pickInside && (
             <g className="pl-pick">
               <title>{p.pickLabel}</title>

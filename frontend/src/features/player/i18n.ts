@@ -4,6 +4,16 @@ import type { Dict } from '../../i18n'
 // (i18n.test.ts lo verifica).
 const d: Dict = {
   en: {
+    'player.contrast': "Contrast",
+    'player.contrast.common': "Common",
+    'player.contrast.frame': "Per frame",
+    'player.contrastHint': "Common: every frame is stretched with the same range, so brightness changes are real. Per frame: each frame is stretched on its own (more detail, but brightness changes disappear).",
+    'player.contrastOn': "Same contrast in every frame ({vmin} to {vmax} MJy/sr): brightness changes in the video are real changes of the sky.",
+    'player.contrastNone': "This server does not provide display ranges yet: each frame is stretched on its own, so brightness changes are not comparable between frames.",
+    'player.contrastZodi': "With zodiacal light subtracted, each frame is stretched on its own: brightness changes are not comparable between frames.",
+    'player.contrastFrame': "Per-frame contrast: each frame is stretched on its own. Good for detail, but a star that brightens will not look brighter.",
+    'player.statementLabel': "Coordinates given in the challenge statement (epoch ~2010)",
+    'player.legendStatement': "challenge coordinates (~2010)",
     'player.title': 'Sky over time',
     'player.noQuery': 'Pick a target or type coordinates to see that patch of sky over time.',
     'player.loading': 'Asking the archive which frames cover this point…',
@@ -58,6 +68,16 @@ const d: Dict = {
     'player.legendMask': 'magenta = mask {bits}',
   },
   es: {
+    'player.contrast': "Contraste",
+    'player.contrast.common': "Común",
+    'player.contrast.frame': "Por cuadro",
+    'player.contrastHint': "Común: todos los cuadros se estiran con el mismo rango, así los cambios de brillo son reales. Por cuadro: cada cuadro se estira solo (más detalle, pero los cambios de brillo desaparecen).",
+    'player.contrastOn': "Mismo contraste en todos los cuadros ({vmin} a {vmax} MJy/sr): los cambios de brillo del video son cambios reales del cielo.",
+    'player.contrastNone': "Este servidor todavía no informa rangos de brillo: cada cuadro se estira solo, así que los cambios de brillo no se pueden comparar entre cuadros.",
+    'player.contrastZodi': "Con la luz zodiacal restada, cada cuadro se estira solo: los cambios de brillo no se pueden comparar entre cuadros.",
+    'player.contrastFrame': "Contraste por cuadro: cada cuadro se estira solo. Sirve para ver detalle, pero una estrella que se vuelve más brillante no se va a ver más brillante.",
+    'player.statementLabel': "Coordenadas del enunciado (época ~2010)",
+    'player.legendStatement': "coordenadas del enunciado (~2010)",
     'player.title': 'El cielo en el tiempo',
     'player.noQuery': 'Elegí un objetivo o escribí coordenadas para ver esa zona del cielo en el tiempo.',
     'player.loading': 'Preguntando al archivo qué cuadros cubren este punto…',

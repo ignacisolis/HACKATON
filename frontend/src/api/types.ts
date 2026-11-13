@@ -43,6 +43,14 @@ export interface Frame {
   quality: Quality | null
   /** false = todavía no se bajó de IRSA (carga progresiva) */
   ready?: boolean
+  /** decisión 11 del contrato: límites de estirado que usaría el backend, en MJy/sr, medidos sobre
+   *  la misma imagen que se pinta. El frontend arma con esto un vmin/vmax común a todo el video. */
+  display_range?: DisplayRange | null
+}
+
+export interface DisplayRange {
+  zscale: [number, number]
+  p99_7: number
 }
 
 export interface FramesResponse {
@@ -139,6 +147,29 @@ export interface TargetSummary {
   frames?: number | null
   cached?: number
   failed?: unknown[]
+  /** la resta que mejor muestra el movimiento (backend/app/best_pairs.py), o null */
+  best_pair?: BestPair | null
+  motion?: MotionClaim | null
+}
+
+export interface BestPair {
+  a: string
+  b: string
+  detector: Detector
+  dt_days: number
+  wavelength_um: [number, number]
+  detected: boolean
+  pos_snr: number
+  neg_snr: number
+  separation_px?: number
+  motion_consistent?: boolean
+}
+
+export interface MotionClaim {
+  /** 'confirmado' | 'indicio' | 'no' */
+  claim: string
+  detectors_consistent: number
+  detectors_tested: number
 }
 
 export interface CoverageResponse {

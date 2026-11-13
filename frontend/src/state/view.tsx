@@ -28,6 +28,10 @@ export interface ViewState {
   mask: string[]
   /** cuadro contra el que se resta el actual (C5); id de cuadro o null */
   diff: string | null
+  /** cuadro A de la resta fijado (p. ej. el mejor par del backend); null = A es el cuadro del video */
+  diffA: string | null
+  /** 'common' = mismo vmin/vmax en todo el video (los cambios de brillo son reales); 'frame' = cada cuadro se estira solo */
+  contrast: 'common' | 'frame'
   /** punto elegido con click para el espectro (grados ICRS); null = centro */
   pick: { ra: number; dec: number } | null
   lang: Lang
@@ -35,7 +39,7 @@ export interface ViewState {
 
 export const DEFAULT_VIEW: ViewState = {
   target: 'r_dra', ra: null, dec: null, fov: 0.1, det: null, band: null, t: 0,
-  stretch: 'asinh', zodi: false, mask: [], diff: null, pick: null,
+  stretch: 'asinh', zodi: false, mask: [], diff: null, diffA: null, contrast: 'common', pick: null,
   lang: (typeof navigator !== 'undefined' && navigator.language?.startsWith('es')) ? 'es' : 'en',
 }
 
@@ -56,6 +60,8 @@ export function parseView(search: string): ViewState {
   if (p.get('zodi') === '1') v.zodi = true
   const mask = p.get('mask'); if (mask) v.mask = mask.split(',').filter(Boolean)
   const diff = p.get('diff'); if (diff && /^[0-9A-Za-z_]+$/.test(diff)) v.diff = diff
+  const diffA = p.get('da'); if (diffA && /^[0-9A-Za-z_]+$/.test(diffA)) v.diffA = diffA
+  if (p.get('cs') === 'frame') v.contrast = 'frame'
   const pra = num(p.get('pra')), pdec = num(p.get('pdec')); if (pra != null && pdec != null) v.pick = { ra: pra, dec: pdec }
   const lang = p.get('lang'); if (lang === 'en' || lang === 'es') v.lang = lang
   return v
@@ -73,6 +79,8 @@ export function serializeView(v: ViewState): string {
   if (v.zodi) p.set('zodi', '1')
   if (v.mask.length) p.set('mask', v.mask.join(','))
   if (v.diff) p.set('diff', v.diff)
+  if (v.diffA) p.set('da', v.diffA)
+  if (v.contrast === 'frame') p.set('cs', 'frame')
   if (v.pick) { p.set('pra', v.pick.ra.toFixed(5)); p.set('pdec', v.pick.dec.toFixed(5)) }
   p.set('lang', v.lang)
   return p.toString()
@@ -103,6 +111,7 @@ export function ViewProvider({ children }: { children: ReactNode }) {
       if (positionKey(next) !== positionKey(prev)) {
         if (!('t' in delta)) next.t = 0
         if (!('diff' in delta)) next.diff = null
+        if (!('diffA' in delta)) next.diffA = null
         if (!('pick' in delta)) next.pick = null
         if (!('det' in delta)) next.det = null
         if (!('band' in delta)) next.band = null
