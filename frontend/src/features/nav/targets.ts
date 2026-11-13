@@ -3,7 +3,7 @@
 // config/targets.yaml (generado 2026-11-10T22:05:45Z con core/fetch_targets.py).
 import { useEffect, useState } from 'react'
 import { api } from '../../api/client'
-import type { TargetKey } from '../../api/types'
+import type { BestPair, MotionClaim, TargetKey } from '../../api/types'
 
 export const SPHEREX_PIXEL_ARCSEC = 6.2
 /** Lados de recorte ofrecidos (grados). 0.3 es el máximo que acepta el backend. */
@@ -24,6 +24,9 @@ export interface NavTarget {
   pmRequired: boolean
   /** coordenadas del enunciado, si las hay (WISE 0855: época de descubrimiento ~2010.5) */
   statement?: { ra: number; dec: number }
+  /** de /api/targets: la resta que mejor muestra el movimiento y qué tan firme es (solo con backend) */
+  bestPair?: BestPair | null
+  motion?: MotionClaim | null
 }
 
 const mid = (a: number, b: number) => (a + b) / 2
@@ -66,7 +69,9 @@ export function loadTargets() {
     .then(remote => {
       const list = NAV_TARGETS_FALLBACK.map(fb => {
         const r = remote.find(x => x.key === fb.key)
-        return r && Number.isFinite(r.ra) && Number.isFinite(r.dec) ? { ...fb, name: r.name || fb.name, ra: r.ra, dec: r.dec } : fb
+        return r && Number.isFinite(r.ra) && Number.isFinite(r.dec)
+          ? { ...fb, name: r.name || fb.name, ra: r.ra, dec: r.dec, bestPair: r.best_pair ?? null, motion: r.motion ?? null }
+          : fb
       })
       return { list, fromApi: true }
     })

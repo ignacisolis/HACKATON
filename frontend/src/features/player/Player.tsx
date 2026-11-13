@@ -10,6 +10,8 @@ import { useT } from '../../i18n'
 import { useFrames } from '../../state/frames'
 import { useView } from '../../state/view'
 import Pickers from './Pickers'
+import { findTarget, useTargets } from '../nav/targets'
+import { commonRange } from './contrast'
 import { clampIndex, formatDateUTC, formatWavelength, nextPlayable, SPEEDS } from './playback'
 import { forgetErrors, loadStatus, usePreload, type LoadStatus } from './preload'
 import { referenceWavelength, sequenceStats } from './sequence'
@@ -46,9 +48,17 @@ export default function Player() {
 
   // ---- URLs y precarga ----------------------------------------------------------------------
   const layer: ImageLayer = view.zodi ? 'image-zodi' : 'image'
+  // Contraste común (contrast.ts): solo sobre la imagen sin restar luz zodiacal, que es sobre la que
+  // el backend mide display_range. Con ZODI restada el fondo baja y ese rango ya no vale.
+  const range = useMemo(
+    () => (view.contrast === 'common' && !view.zodi ? commonRange(sequence, view.stretch) : null),
+    [sequence, view.contrast, view.zodi, view.stretch],
+  )
   const urls = useMemo(
-    () => (query ? sequence.map(f => api.frameImageUrl(f, query, { stretch: view.stretch, layer })) : []),
-    [sequence, query, view.stretch, layer],
+    () => (query ? sequence.map(f => api.frameImageUrl(f, query, {
+      stretch: view.stretch, layer, ...(range ? { vmin: range.vmin, vmax: range.vmax } : {}),
+    })) : []),
+    [sequence, query, view.stretch, layer, range],
   )
   const maskKey = view.mask.join(',')
   const maskUrls = useMemo(
@@ -161,6 +171,11 @@ export default function Player() {
     () => (view.band == null ? referenceWavelength(frames.filter(f => f.detector === detector)) : null),
     [frames, detector, view.band],
   )
+  // coordenadas de catálogo que no coinciden con la posición del objeto en estos datos (WISE 0855:
+  // las del enunciado son de ~2010 y caen a ~21 px). Se marcan sobre el recorte para mostrarlo.
+  const { list: targets } = useTargets()
+  const statement = findTarget(targets, view.target)?.statement ?? null
+  const refMarks = statement ? [{ ...statement, label: tr('player.statementLabel') }] : []
   const pending = response?.pending ?? 0
   const total = response?.n_frames ?? 0
 
@@ -208,6 +223,7 @@ export default function Player() {
             maskUrl={maskUrl}
             center={center}
             pick={view.pick}
+            refMarks={refMarks}
             onPick={pick => setView({ pick })}
             waiting={frameStatus(i) === undefined}
             label={tr('player.stageLabel', { date: dateText, det: frame.detector, wl: wlText })}
@@ -234,6 +250,7 @@ export default function Player() {
             <span className="pl-key-cross">{tr('player.legendCross')}</span>
             {view.pick && <span className="pl-key-pick">{tr('player.legendPick')}</span>}
             {view.mask.length > 0 && <span className="pl-key-mask">{tr('player.legendMask', { bits: view.mask.join(', ') })}</span>}
+            {refMarks.length > 0 && <span className="pl-key-ref">{tr('player.legendStatement')}</span>}
           </div>
 
           <div className="pl-controls">
@@ -253,6 +270,12 @@ export default function Player() {
               {(['asinh', 'linear'] as const).map(s => (
                 <button key={s} className={view.stretch === s ? 'on' : ''} aria-pressed={view.stretch === s}
                   onClick={() => setView({ stretch: s })}>{tr(`player.stretch.${s}`)}</button>
+              ))}
+            </div>
+            <div className="seg" role="group" aria-label={tr('player.contrast')} title={tr('player.contrastHint')}>
+              {(['common', 'frame'] as const).map(c => (
+                <button key={c} className={view.contrast === c ? 'on' : ''} aria-pressed={view.contrast === c}
+                  onClick={() => setView({ contrast: c })}>{tr(`player.contrast.${c}`)}</button>
               ))}
             </div>
             <label className="pl-check">
@@ -306,6 +329,11 @@ export default function Player() {
             {tr('player.mixInfo', { ref: refWl.toFixed(3), min: stats.wlMin.toFixed(3), max: stats.wlMax.toFixed(3) })}
           </div>
         )}
+        {n > 1 && range && <div className="notice info">{tr('player.contrastOn', { vmin: range.vmin, vmax: range.vmax })}</div>}
+        {n > 1 && view.contrast === 'common' && !range && (
+          <div className="notice">{tr(view.zodi ? 'player.contrastZodi' : 'player.contrastNone')}</div>
+        )}
+        {n > 1 && view.contrast === 'frame' && <div className="notice">{tr('player.contrastFrame')}</div>}
         {stats.bad > 0 && <div className="notice">{tr('player.badInSeq', { n: stats.bad })}</div>}
         {errorCount > 0 && <div className="notice">{tr('player.imgErrors', { n: errorCount })}</div>}
         {view.target === 'wise_0855' && <div className="notice info">{tr('player.wise0855')}</div>}

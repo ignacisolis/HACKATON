@@ -28,7 +28,7 @@ export function SkyImage({ src, alt, markers = [], caption }: { src: string; alt
       <div className="ins-img">
         {failed
           ? <div className="ins-img-error muted">{t('inspect.diff.imgError')}</div>
-          : <img src={src} alt={alt} loading="lazy" decoding="async"
+          : <img src={src} alt={alt} decoding="async"
               onLoad={e => setDims({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
               onError={() => setFailed(true)} />}
         {dims && !failed && markers.map((m, i) => m.xy && (

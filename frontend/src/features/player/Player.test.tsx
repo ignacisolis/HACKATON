@@ -30,6 +30,7 @@ vi.mock('../../api/client', () => ({
   api: {
     frameImageUrl: (f: Frame, _q: unknown, o: { layer?: string }) => `/png/${f.id}/${o.layer ?? 'image'}`,
     frames: vi.fn(() => new Promise(() => {})),
+    targets: vi.fn(async () => []),
   },
 }))
 

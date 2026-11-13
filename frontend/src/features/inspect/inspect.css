@@ -85,7 +85,8 @@
 .ins-fig { margin: 0; min-width: 0; }
 .ins-fig figcaption { text-align: center; font-size: 11px; color: var(--muted); margin-top: 2px; font-family: var(--mono); }
 .ins-img { position: relative; width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-.ins-img img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+/* aspect-ratio 1 mientras carga: los recortes son cuadrados y así el lugar ya está reservado */
+.ins-img img { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
 .ins-img-error, .ins-img-empty { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; font-size: 11px; padding: 6px; text-align: center; }
 
 .ins-mark {
@@ -103,3 +104,9 @@
   .ins-table col.c-px { width: 3.9em; }
   .ins-table col.c-pct { width: 4.2em; }
 }
+
+/* mejor par según el servidor (/api/targets → best_pair) */
+.ins-best { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin: 8px 0; display: grid; gap: 6px; }
+.ins-best.on { border-color: var(--ok); }
+.ins-best p { margin: 0; }
+.ins-best-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
