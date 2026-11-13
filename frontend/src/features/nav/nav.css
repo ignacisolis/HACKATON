@@ -56,7 +56,14 @@
   border: 1px solid var(--border); background: var(--bg);
 }
 .nav-sky-frame.failed { display: none; }
-.nav-sky-host { position: absolute; inset: 0; }
+/* height: 100% es necesario. Al inicializarse, Aladin le agrega a este mismo div
+   la clase .aladin-container e inyecta en <head> su propia hoja con
+   `.aladin-container { position: relative }`. Misma especificidad que la regla de
+   abajo y se inyecta después, así que gana: el `absolute` se pierde, `inset: 0`
+   deja de estirar y la altura vuelve a `auto`. Como los únicos hijos son los
+   canvas de Aladin, que son `absolute`, el contenedor queda en 0 px y el canvas
+   en 1 px: el panel se ve negro sin ningún error en consola. */
+.nav-sky-host { position: absolute; inset: 0; height: 100%; }
 .nav-sky-placeholder { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; }
 @media (max-width: 760px) {
   .nav-sky-frame { height: 260px; }
