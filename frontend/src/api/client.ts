@@ -91,6 +91,15 @@ export const api = {
   },
 
   /**
+   * URL del recorte FITS original de un cuadro: el MEF tal como lo sirve IRSA.
+   * El backend responde 302 al cutout. Devuelve null con fixtures, donde no hay backend.
+   */
+  frameFitsUrl(frame: Frame, q: SkyQuery): string | null {
+    if (USE_FIXTURES) return null
+    return url(`/api/frame/${encodeURIComponent(frame.id)}/fits`, skyParams(q))
+  },
+
+  /**
    * Resta a − b como PNG. PROPUESTA de contrato (pendiente con Camilo): GET /api/diff?a=&b=&…
    * Responde 422 {error, detail} si no son comparables (core.is_comparable). Hasta que exista,
    * el backend devuelve 404: usar diffCheck() para mostrar el motivo.
