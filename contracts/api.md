@@ -78,6 +78,7 @@ Los cuadros que cubren un punto, para armar el video.
       "band": 24,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/<id>/png?stretch=asinh",
+      "fits_url": "/api/frame/<id>/fits",
       "target_xy": [29.5, 29.5],
       "flagged_fraction": 0.41,
       "quality": "ok"
@@ -93,6 +94,10 @@ Los cuadros que cubren un punto, para armar el video.
   cada exposición mide el objetivo en una λ concreta. Sale de `WCS-WAVE`.
 - 🔬 **`target_xy`** es dónde cae el objetivo en la imagen devuelta. El frontend
   lo necesita para dibujar la cruz, y no es siempre el centro.
+- 🔬 **`fits_url`** lleva al **FITS original** de ese cuadro, no al PNG: es el
+  dato con el que se puede rehacer cualquier medicion del visor. Es **opcional**;
+  un backend que no lo publique sigue cumpliendo el contrato, y el frontend
+  simplemente no muestra el boton de descarga.
 - `release` viaja en cada cuadro porque puede haber **varios releases a la vez**
   en el archivo. Es parte de la consideración C1.
 - 🔬 `flagged_fraction` se calcula **sobre el recorte**, no con las tarjetas
@@ -154,6 +159,24 @@ tiempo**", y para R Dra, una Mira de ~245 días con 522 días de cobertura, esto
 muestra dos ciclos completos.
 
 ---
+
+## `GET /api/frame/{id}/fits`
+
+El **recorte FITS original**: el MEF tal como lo sirve IRSA, con todas sus
+extensiones (`IMAGE`, `FLAGS`, `VARIANCE`, `ZODI`, `WCS-WAVE`, `PSF`).
+
+Mismos parametros que `/meta`: `target=` o `ra=`/`dec=`, mas `size=`.
+
+**Responde `302`** a la URL del cutout de IRSA. No se sirven los bytes desde
+nuestro backend, y es a proposito:
+
+- la cache guarda una version **compacta en `.npz`**, no el FITS, asi que
+  servirlo obligaria a bajarlo de nuevo;
+- pasar varios MB por un servicio gratuito lo hace lento sin ganar nada;
+- el navegador los baja de IRSA directo, que es quien tiene el dato.
+
+Quien quiera el archivo desde un script puede seguir el redirect
+(`curl -L`) o pedirle la URL final a `curl -I`.
 
 ## `GET /api/frame/{id}/meta`
 

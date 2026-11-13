@@ -22,6 +22,7 @@
       "band": 8,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/0/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20250505_1D1/fits",
       "target_xy": [
         29.5,
         29.5
@@ -39,6 +40,7 @@
       "band": 64,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/27/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20250505_1D4/fits",
       "target_xy": [
         29.5,
         29.5
@@ -56,6 +58,7 @@
       "band": 21,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/1/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20250506_1D2/fits",
       "target_xy": [
         29.5,
         29.5
@@ -73,6 +76,7 @@
       "band": 80,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/28/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20250506_1D5/fits",
       "target_xy": [
         29.5,
         29.5
@@ -90,6 +94,7 @@
       "band": 24,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/2/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251031_1D3/fits",
       "target_xy": [
         29.5,
         29.5
@@ -107,6 +112,7 @@
       "band": 90,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/29/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251031_1D6/fits",
       "target_xy": [
         29.5,
         29.5
@@ -124,6 +130,7 @@
       "band": 66,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/3/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251103_1D4/fits",
       "target_xy": [
         29.5,
         29.5
@@ -141,6 +148,7 @@
       "band": 7,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/30/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251103_1D1/fits",
       "target_xy": [
         29.5,
         29.5
@@ -158,6 +166,7 @@
       "band": 75,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/4/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251107_1D5/fits",
       "target_xy": [
         29.5,
         29.5
@@ -175,6 +184,7 @@
       "band": 17,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/31/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251107_1D2/fits",
       "target_xy": [
         29.5,
         29.5
@@ -192,6 +202,7 @@
       "band": 93,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/5/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251108_1D6/fits",
       "target_xy": [
         29.5,
         29.5
@@ -209,6 +220,7 @@
       "band": 34,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/32/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251108_1D3/fits",
       "target_xy": [
         29.5,
         29.5
@@ -226,6 +238,7 @@
       "band": 7,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/6/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251110_1D1/fits",
       "target_xy": [
         29.5,
         29.5
@@ -243,6 +256,7 @@
       "band": 59,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/33/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251110_1D4/fits",
       "target_xy": [
         29.5,
         29.5
@@ -260,6 +274,7 @@
       "band": 15,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/7/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251114_1D2/fits",
       "target_xy": [
         29.5,
         29.5
@@ -277,6 +292,7 @@
       "band": 74,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/34/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251114_1D5/fits",
       "target_xy": [
         29.5,
         29.5
@@ -294,6 +310,7 @@
       "band": 32,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/8/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251211_1D3/fits",
       "target_xy": [
         29.5,
         29.5
@@ -311,6 +328,7 @@
       "band": 91,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/35/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251211_1D6/fits",
       "target_xy": [
         29.5,
         29.5
@@ -328,6 +346,7 @@
       "band": 69,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/9/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251212_1D4/fits",
       "target_xy": [
         29.5,
         29.5
@@ -345,6 +364,7 @@
       "band": 8,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/36/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251212_1D1/fits",
       "target_xy": [
         29.5,
         29.5
@@ -362,6 +382,7 @@
       "band": 85,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/10/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251213_1D5/fits",
       "target_xy": [
         29.5,
         29.5
@@ -379,6 +400,7 @@
       "band": 10,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/37/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20251213_1D2/fits",
       "target_xy": [
         29.5,
         29.5
@@ -396,6 +418,7 @@
       "band": 102,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/11/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260421_1D6/fits",
       "target_xy": [
         29.5,
         29.5
@@ -413,6 +436,7 @@
       "band": 27,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/38/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260421_1D3/fits",
       "target_xy": [
         29.5,
         29.5
@@ -430,6 +454,7 @@
       "band": 8,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/12/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260422_1D1/fits",
       "target_xy": [
         29.5,
         29.5
@@ -447,6 +472,7 @@
       "band": 59,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/39/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260422_1D4/fits",
       "target_xy": [
         29.5,
         29.5
@@ -464,6 +490,7 @@
       "band": 15,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/13/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260423_1D2/fits",
       "target_xy": [
         29.5,
         29.5
@@ -481,6 +508,7 @@
       "band": 25,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/14/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260426_1D3/fits",
       "target_xy": [
         29.5,
         29.5
@@ -498,6 +526,7 @@
       "band": 66,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/15/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260430_1D4/fits",
       "target_xy": [
         29.5,
         29.5
@@ -515,6 +544,7 @@
       "band": 78,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/16/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260501_1D5/fits",
       "target_xy": [
         29.5,
         29.5
@@ -532,6 +562,7 @@
       "band": 94,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/17/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260502_1D6/fits",
       "target_xy": [
         29.5,
         29.5
@@ -549,6 +580,7 @@
       "band": 2,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/18/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260503_1D1/fits",
       "target_xy": [
         29.5,
         29.5
@@ -566,6 +598,7 @@
       "band": 12,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/19/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260504_1D2/fits",
       "target_xy": [
         29.5,
         29.5
@@ -583,6 +616,7 @@
       "band": 30,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/20/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260505_1D3/fits",
       "target_xy": [
         29.5,
         29.5
@@ -600,6 +634,7 @@
       "band": 64,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/21/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260508_1D4/fits",
       "target_xy": [
         29.5,
         29.5
@@ -617,6 +652,7 @@
       "band": 86,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/22/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260509_1D5/fits",
       "target_xy": [
         29.5,
         29.5
@@ -634,6 +670,7 @@
       "band": 93,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/23/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260511_1D6/fits",
       "target_xy": [
         29.5,
         29.5
@@ -651,6 +688,7 @@
       "band": 7,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/24/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260512_1D1/fits",
       "target_xy": [
         29.5,
         29.5
@@ -668,6 +706,7 @@
       "band": 12,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/25/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260513_1D2/fits",
       "target_xy": [
         29.5,
         29.5
@@ -685,6 +724,7 @@
       "band": 37,
       "release": "l2b-v20-2025-251",
       "image_url": "/api/frame/26/png?stretch=asinh",
+      "fits_url": "/api/frame/l2b-v20-2025-251/level2_20260514_1D3/fits",
       "target_xy": [
         29.5,
         29.5
