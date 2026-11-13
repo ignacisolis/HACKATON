@@ -84,6 +84,11 @@ export default function MetaTab({ frame, meta }: { frame: Frame; meta: FrameMeta
             : <span className="muted">{t('inspect.meta.notAvailable')}</span>}
         </Row>
         {x.shape && <Row label={t('inspect.meta.cutout')}><span className="mono">{x.shape[1]}×{x.shape[0]} px</span></Row>}
+        {frame.fits_url && (
+          <Row label={t('inspect.meta.fits')} hint={t('inspect.meta.fitsHint')}>
+            <a href={frame.fits_url} download rel="noreferrer">{t('inspect.meta.fitsDownload')}</a>
+          </Row>
+        )}
         <Row label={t('inspect.meta.target')}>
           {x.target?.inside === false
             ? <span className="badge bad">{t('inspect.meta.targetOutside')}</span>

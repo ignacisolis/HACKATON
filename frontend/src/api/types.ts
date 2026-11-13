@@ -37,6 +37,8 @@ export interface Frame {
   collection?: string
   image_url: string
   meta_url?: string
+  /** recorte FITS original (MEF) de IRSA; el backend responde 302. Opcional */
+  fits_url?: string
   /** píxeles del PNG, base 0, x a la derecha, y hacia abajo. Cambia de cuadro a cuadro */
   target_xy: [number, number] | null
   flagged_fraction: number | null

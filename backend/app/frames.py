@@ -221,6 +221,7 @@ def frame_item(o: irsa.Observation, q: Query, sm: dict | None, s: Settings) -> d
         "collection": o.collection,
         "image_url": f"{base}/png?{q.qs}&stretch=asinh",
         "meta_url": f"{base}/meta?{q.qs}",
+        "fits_url": f"{base}/fits?{q.qs}",
         "target_xy": sm and sm["target_xy"],
         "flagged_fraction": sm and sm["flagged_fraction"],
         "quality": sm and sm["quality"],

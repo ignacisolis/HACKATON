@@ -131,3 +131,19 @@ def test_meta_with_nan_target_pixel(client, monkeypatch):
     f = c.get("/api/frames", params={"ra": RA, "dec": DEC, "prefetch": False}).json()["frames"][1]
     r = c.get(f["meta_url"])
     assert r.status_code == 200 and r.json()["target"]["value"] is None
+
+
+def test_fits_url_redirige_a_irsa_sin_descargar(client):
+    """fits_url responde 302 al cutout de IRSA y no baja nada por nuestro backend."""
+    c, calls = client
+    body = c.get("/api/frames", params={"ra": RA, "dec": DEC, "prefetch": False}).json()
+    f = body["frames"][0]
+    assert f["fits_url"].startswith(f"/api/frame/{f['id']}/fits")
+
+    r = c.get(f["fits_url"], follow_redirects=False)
+    assert r.status_code == 302
+    destino = r.headers["location"]
+    assert destino.startswith("https://irsa.ipac.caltech.edu/")
+    assert "center=" in destino and "size=" in destino
+    # El navegador lo baja de IRSA: el redirect no cuesta una descarga acá.
+    assert calls["cutout"] == 0

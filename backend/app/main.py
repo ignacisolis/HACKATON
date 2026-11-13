@@ -226,6 +226,20 @@ def get_frame_meta(frame_id: str, ra: str | None = None, dec: str | None = None,
     return frames.frame_meta(o, cutout_or_502(o, q), q)
 
 
+@app.get("/api/frame/{frame_id}/fits")
+def get_frame_fits(frame_id: str, ra: str | None = None, dec: str | None = None,
+                   target: str | None = None, size: float | None = None):
+    """Redirige (302) al recorte FITS original de IRSA.
+
+    No se sirven los bytes desde acá a propósito: la caché guarda una versión compacta
+    en .npz y no el FITS, así que habría que bajarlo de nuevo, y pasar varios MB por
+    este servicio gratuito lo hace lento sin ganar nada. El navegador lo baja de IRSA.
+    """
+    q = resolve(ra, dec, size, target)
+    o = obs_or_404(frame_id)
+    return RedirectResponse(irsa.cutout_url(o.uri, q.ra, q.dec, q.size), status_code=302)
+
+
 @app.get("/api/spectrum")
 def get_spectrum(ra: str | None = None, dec: str | None = None, target: str | None = None,
                  size: float | None = None):
