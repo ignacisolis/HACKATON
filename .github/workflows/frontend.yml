@@ -7,7 +7,7 @@
 # el repo y fallaba con 404 en cada push a main, dejando una X roja permanente que además
 # bloqueaba proteger main (no se puede exigir un check que nunca pasa). Si algún día se quiere
 # Pages de verdad, hay que activarlo en Settings → Pages y volver a poner el job y el paso de
-# `upload-pages-artifact``upload-pages-artifact`, más VITE_BASE, que Pages necesita para servir bajo /<repo>/.
+# `upload-pages-artifact`, más VITE_BASE, que Pages necesita para servir bajo /<repo>/.
 #
 # Variables del repo (Settings → Secrets and variables → Actions → Variables):
 #   VITE_API_BASE       URL pública del backend (ej. https://spherex-api.example.org). Vacía = fixtures.
