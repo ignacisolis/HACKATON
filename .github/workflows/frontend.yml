@@ -1,9 +1,15 @@
-# Frontend (rol B, Bruno): tipos + pruebas + build en cada push/PR, y despliegue a GitHub Pages
-# cuando entra a main.
+# Frontend (rol B, Bruno): tipos + pruebas + build en cada push/PR. **Solo comprueba.**
 #
-# OJO: GitHub Pages en un repo PRIVADO necesita un plan pago. Si el repo sigue privado, el job
-# `deploy` falla y hay que publicar en otro lado (Vercel/Netlify/Cloudflare Pages) o hacer el repo
-# público. Variables del repo (Settings → Secrets and variables → Actions → Variables):
+# El despliegue NO pasa por acá: la web se publica en Vercel, que construye desde `vercel.json`
+# en la raíz y toma sus variables del panel de Vercel, no de las del repo.
+#
+# Hubo un job `deploy` que publicaba en GitHub Pages. Se sacó porque Pages nunca se activó en
+# el repo y fallaba con 404 en cada push a main, dejando una X roja permanente que además
+# bloqueaba proteger main (no se puede exigir un check que nunca pasa). Si algún día se quiere
+# Pages de verdad, hay que activarlo en Settings → Pages y volver a poner el job y el paso de
+# `upload-pages-artifact``upload-pages-artifact`, más VITE_BASE, que Pages necesita para servir bajo /<repo>/.
+#
+# Variables del repo (Settings → Secrets and variables → Actions → Variables):
 #   VITE_API_BASE       URL pública del backend (ej. https://spherex-api.example.org). Vacía = fixtures.
 name: frontend
 
@@ -38,27 +44,8 @@ jobs:
       - run: npx vitest run
       - name: Build
         env:
-          VITE_BASE: /${{ github.event.repository.name }}/
           VITE_API_BASE: ${{ vars.VITE_API_BASE }}
-          # sin backend público todavía, la web publicada usa los fixtures
+          # Este build es una comprobación: su salida se descarta. La web que se publica la
+          # construye Vercel, con sus propias variables.
           VITE_USE_FIXTURES: ${{ vars.VITE_API_BASE == '' && '1' || '0' }}
         run: npx vite build
-      - uses: actions/upload-pages-artifact@v3
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        with:
-          path: frontend/dist
-
-  deploy:
-    name: Publicar en GitHub Pages
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
