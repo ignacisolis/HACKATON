@@ -94,7 +94,9 @@ Los cuadros que cubren un punto, para armar el video.
   cada exposición mide el objetivo en una λ concreta. Sale de `WCS-WAVE`.
 - 🔬 **`target_xy`** es dónde cae el objetivo en la imagen devuelta. El frontend
   lo necesita para dibujar la cruz, y no es siempre el centro.
-- 🔬 **`fits_url`** lleva al **FITS original** de ese cuadro, no al PNG: es el
+- 🔬 **`fits_url`** es **relativa al backend**, como `image_url` y `meta_url`: si la
+  web vive en otro dominio hay que anteponerle la base de la API. Lleva al
+  **FITS original** de ese cuadro, no al PNG: es el
   dato con el que se puede rehacer cualquier medicion del visor. Es **opcional**;
   un backend que no lo publique sigue cumpliendo el contrato, y el frontend
   simplemente no muestra el boton de descarga.

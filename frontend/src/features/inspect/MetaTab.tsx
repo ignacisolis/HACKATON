@@ -1,7 +1,9 @@
 // Pestaña Metadata (C6): de cuándo, con qué y cómo es el cuadro actual, y por qué tiene la calidad que tiene.
 import type { ReactNode } from 'react'
+import { api } from '../../api/client'
 import type { Frame, FrameMeta, Quality } from '../../api/types'
 import { useT } from '../../i18n'
+import { useFrames } from '../../state/frames'
 import { useView } from '../../state/view'
 import {
   fmtCollection, fmtDateUtc, fmtNum, fmtPct, qualityReasons, readExtras, resolvingPower,
@@ -51,6 +53,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 export default function MetaTab({ frame, meta }: { frame: Frame; meta: FrameMeta }) {
   const t = useT()
   const { view } = useView()
+  const { query } = useFrames()
   const lang = view.lang
   const x = readExtras(meta)
   const quality = meta.quality ?? frame.quality ?? null
@@ -58,6 +61,9 @@ export default function MetaTab({ frame, meta }: { frame: Frame; meta: FrameMeta
   const xy = x.target?.xy ?? frame.target_xy
   const flagged = x.flagged_fraction ?? frame.flagged_fraction
   const band = meta.band ?? frame.band
+  // fits_url del payload dice SI el backend lo ofrece (es opcional en el contrato); la URL
+  // de verdad la arma el cliente, porque la API vive en otro origen (API_BASE).
+  const fitsUrl = query && frame.fits_url ? api.frameFitsUrl(frame, query) : null
 
   return (
     <div className="ins-meta">
@@ -84,9 +90,9 @@ export default function MetaTab({ frame, meta }: { frame: Frame; meta: FrameMeta
             : <span className="muted">{t('inspect.meta.notAvailable')}</span>}
         </Row>
         {x.shape && <Row label={t('inspect.meta.cutout')}><span className="mono">{x.shape[1]}×{x.shape[0]} px</span></Row>}
-        {frame.fits_url && (
+        {fitsUrl && (
           <Row label={t('inspect.meta.fits')} hint={t('inspect.meta.fitsHint')}>
-            <a href={frame.fits_url} download rel="noreferrer">{t('inspect.meta.fitsDownload')}</a>
+            <a href={fitsUrl} download rel="noreferrer">{t('inspect.meta.fitsDownload')}</a>
           </Row>
         )}
         <Row label={t('inspect.meta.target')}>
